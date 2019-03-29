@@ -42,15 +42,15 @@ INode get_inode(int (*dir_position)[2]){
 	read_blocks(dir_num, 1, &db);
 
 	INodeBlock inb;
-	int inb_num = db.position[dir_offset][0];
-	int inb_offset = db.position[dir_offset][1];
+	int inb_num = db.directory_entries[dir_offset].block_number;
+	int inb_offset = db.directory_entries[dir_offset].inode_number;
 	read_blocks(inb_num, 1, &inb);
 
 	return inb.inodes[inb_offset];
 }
 
 INode get_inode_fdt(int fileID){
-	int dir_position[2] = {fdt.dir_ptr[fileID][0], fdt.dir_ptr[fileID][1]};
+	int dir_position[2] = {fdt.open_files[fileID].directory_number, fdt.open_files[fileID].offset};
 	return get_inode(&dir_position);
 }
 
@@ -61,8 +61,8 @@ void write_inode(int (*dir_position)[2], INode *new_node){
 	read_blocks(dir_num, 1, &db);
 
 	INodeBlock inb;
-	int inb_num = db.position[dir_offset][0];
-	int inb_offset = db.position[dir_offset][1];
+	int inb_num = db.directory_entries[dir_offset].block_number;
+	int inb_offset = db.directory_entries[dir_offset].inode_number;
 	read_blocks(inb_num, 1, &inb);
 
 	memcpy(&(inb.inodes[inb_offset]), new_node, sizeof(INode));
@@ -70,7 +70,7 @@ void write_inode(int (*dir_position)[2], INode *new_node){
 }
 
 void write_inode_fdt(int fileID, INode *node){
-	int dir_position[2] = {fdt.dir_ptr[fileID][0], fdt.dir_ptr[fileID][1]};
+	int dir_position[2] = {fdt.open_files[fileID].directory_number, fdt.open_files[fileID].offset};
 	write_inode(&dir_position, node);
 }
 
@@ -96,7 +96,7 @@ int find_free_file(int (*dir_position)[2]){
 	for(int dir_num = DB_POS; dir_num < DB_POS + NUM_DIR_BLOCKS; dir_num++){
 		read_blocks(dir_num, 1, &db);
 		for(int dir_offset = 0; dir_offset < DIR_BLOCK_SIZE; dir_offset++){
-			if(db.position[dir_offset][0]==-1){
+			if(db.directory_entries[dir_offset].block_number==-1){
 				(*dir_position)[0] = dir_num;
 				(*dir_position)[1] = dir_offset;
 				return 0;
@@ -167,8 +167,8 @@ void store_file_data(char *name, int (*dir_position)[2], int (*inb_position)[2])
 
 	memcpy(db.names[(*dir_position)[1]], name, NAME_SIZE);
 
-	db.position[(*dir_position)[1]][0] = (*inb_position)[0];
-	db.position[(*dir_position)[1]][1] = (*inb_position)[1];
+	db.directory_entries[(*dir_position)[1]].block_number = (*inb_position)[0];
+	db.directory_entries[(*dir_position)[1]].inode_number = (*inb_position)[1];
 
 	write_blocks((*dir_position)[0], 1, &db);
 }
@@ -197,7 +197,7 @@ int new_file(char *name, int (*dir_position)[2]){
 int fdt_add(int (*dir_position)[2]){
 	int fdt_pos = 0;
 
-	while(fdt.dir_ptr[fdt_pos][0]!=-1&&fdt_pos<NUM_INODES)
+	while(fdt.open_files[fdt_pos].directory_number!=-1&&fdt_pos<NUM_INODES)
 		fdt_pos++;
 
 	if(fdt_pos==NUM_INODES)
@@ -209,14 +209,14 @@ int fdt_add(int (*dir_position)[2]){
 	DirectoryBlock db;
 	read_blocks(dir_num, 1, &db);
 
-	int inb_num = db.position[dir_offset][0];
-	int inb_offset = db.position[dir_offset][1];
+	int inb_num = db.directory_entries[dir_offset].block_number;
+	int inb_offset = db.directory_entries[dir_offset].inode_number;
 
 	INodeBlock inb;
 	read_blocks(inb_num, 1, &inb);
 
-	fdt.dir_ptr[fdt_pos][0] = dir_num;
-	fdt.dir_ptr[fdt_pos][1] = dir_offset;
+	fdt.open_files[fdt_pos].directory_number = dir_num;
+	fdt.open_files[fdt_pos].offset = dir_offset;
 
 	fdt.read_ptr[fdt_pos] = 0;
 	fdt.write_ptr[fdt_pos] = inb.inodes[inb_offset].fsize;
@@ -230,38 +230,34 @@ int sfs_fopen(char *name){
 	if(search_directory(name, &dir_position)==-1)
 		if(new_file(name, &dir_position)==-1)
 			return -1;
+		
 	int fdt_pos = fdt_add(&dir_position);
 	return fdt_pos;
 }
 
 int sfs_fclose(int fileID){
-	if(fileID < 0||fileID > NUM_INODES)
+	if(fileID < 0 || fileID > NUM_INODES || fdt.open_files[fileID].directory_number==-1)
 		return -1;
-	if(fdt.dir_ptr[fileID][0]==-1)
-		return -1;
-	fdt.dir_ptr[fileID][0] = -1;
-	fdt.dir_ptr[fileID][1] = -1;
+	
+	fdt.open_files[fileID].directory_number = -1;
+	fdt.open_files[fileID].offset = -1;
 	fdt.read_ptr[fileID] = -1;
 	fdt.write_ptr[fileID] = -1;
 	return 0;
 }
 
-int sfs_frseek(int fileID,int loc){
-	if(fdt.dir_ptr[fileID][0]==-1||loc<0||loc>get_inode_fdt(fileID).fsize||fileID<0)
+int sfs_frseek(int fileID, int loc){
+	if(loc<0 || fdt.open_files[fileID].directory_number==-1 || loc>get_inode_fdt(fileID).fsize || fileID<0)
 		return -1;
 	fdt.read_ptr[fileID] = loc;
 	return 0;
 }
 
 int sfs_fwseek(int fileID, int loc){
-	if(fdt.dir_ptr[fileID][0]==-1||loc<0||loc>get_inode_fdt(fileID).fsize||fileID<0)
+	if(loc<0 || fdt.open_files[fileID].directory_number==-1 || loc>get_inode_fdt(fileID).fsize || fileID<0)
 		return -1;
 	fdt.write_ptr[fileID] = loc;
 	return 0;
-}
-
-int block_space(INode node, int start_ptr){
-	return (BLOCK_SIZE - (start_ptr % BLOCK_SIZE));
 }
 
 int next_block(INode *node, int start_ptr){
@@ -302,7 +298,7 @@ int next_block(INode *node, int start_ptr){
 }
 
 int sfs_fwrite(int fileID, char *buf, int length){
-	if(fileID<0||fdt.dir_ptr[fileID][0]==-1)
+	if(fileID<0||fdt.open_files[fileID].directory_number==-1)
 		return -1;
 
 	INode node = get_inode_fdt(fileID);
@@ -316,7 +312,7 @@ int sfs_fwrite(int fileID, char *buf, int length){
 		if(current_block==-1)
 			return -1;
 
-		int free_space = block_space(node, current_pos);
+		int free_space = BLOCK_SIZE - (current_pos % BLOCK_SIZE);
 		int offset = BLOCK_SIZE - free_space;
 
 		read_blocks(current_block, 1, &write_buf.bytes);
@@ -342,7 +338,7 @@ int sfs_fwrite(int fileID, char *buf, int length){
 }
 
 int sfs_fread(int fileID, char *buf, int length){
-	if(fileID<0||fdt.dir_ptr[fileID][0]==-1||length < 0)
+	if(fileID<0||fdt.open_files[fileID].directory_number==-1||length < 0)
 		return -1;
 
 	INode node = get_inode_fdt(fileID);
@@ -357,7 +353,7 @@ int sfs_fread(int fileID, char *buf, int length){
 		memset(&read_buf, 0, sizeof(read_buf));
 		int current_pos = fdt.read_ptr[fileID];
 		int current_block = next_block(&node, current_pos);
-		int read_space = block_space(node, current_pos);
+		int read_space = BLOCK_SIZE - (current_pos % BLOCK_SIZE);
 
 		int offset = fdt.read_ptr[fileID] % BLOCK_SIZE;
 
@@ -408,7 +404,7 @@ void free_inode(int (*dir_position)[2]){
 int search_fdt(int dir_position[2]){
 	int found = 0;
 	while(found < NUM_INODES){
-		if(fdt.dir_ptr[found][0]==dir_position[0]&&fdt.dir_ptr[found][1]==dir_position[1])
+		if(fdt.open_files[found].directory_number==dir_position[0]&&fdt.open_files[found].offset==dir_position[1])
 			return found;
 		found++;
 	}
@@ -420,8 +416,8 @@ void clear_dir_pos(int dir_position[2]){
 	read_blocks(dir_position[0], 1, &db);
 	int entry = dir_position[1];
 	memset(&(db.names[entry]), -1, NAME_SIZE);
-	db.position[entry][0] = -1;
-	db.position[entry][1] = -1;
+	db.directory_entries[entry].block_number = -1;
+	db.directory_entries[entry].inode_number = -1;
 	write_blocks(dir_position[0], 1, &db);
 }
 

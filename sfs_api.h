@@ -40,8 +40,19 @@ int sfs_restore(int cnum);
 #define NUM_INODES_PER_INB	BLOCK_SIZE/(INODE_SIZE*sizeof(int))
 #define NUM_INODES 		NUM_DIR_BLOCKS*DIR_BLOCK_SIZE
 
+typedef struct super_block_t{
+	int magic_num;
+	int block_size;
+	char filler[BLOCK_SIZE];
+} SuperBlock;
+//---------------------------------------------------------------
+typedef struct open_file_t{
+	int directory_number;
+	int offset;
+} OpenFile;
+
 typedef struct file_descr_table_t{
-	int dir_ptr[NUM_INODES][2];
+	OpenFile open_files[NUM_INODES];
 	int read_ptr[NUM_INODES];
 	int write_ptr[NUM_INODES];
 } FileDescrTable;
@@ -52,27 +63,26 @@ typedef struct inode_t{
 	int indirect;
 } INode;
 
+typedef struct indirect{
+	int block_ptrs[BLOCK_SIZE/sizeof(int)];
+} Indirect;
+
 typedef struct inode_block_t{
 	INode inodes[NUM_INODES_PER_INB];
 	char filler[BLOCK_SIZE];
 } INodeBlock;
 
-typedef struct super_block_t{
-	int magic_num;
-	int block_size;
-	char filler[BLOCK_SIZE];
-} SuperBlock;
+typedef struct directory_entry_t{
+	int block_number;
+	int inode_number;
+} DirectoryEntry;
 
 typedef struct directory_block_t{
 	char names[DIR_BLOCK_SIZE][NAME_SIZE];
-	int position[DIR_BLOCK_SIZE][2]; //position[0] = block num; position[1] = i node num within block
+	DirectoryEntry directory_entries[DIR_BLOCK_SIZE];
 	char filler[BLOCK_SIZE];
 } DirectoryBlock;
 
 typedef struct block_t{
 	unsigned char bytes[BLOCK_SIZE];
 } Block;
-
-typedef struct indirect{
-	int block_ptrs[BLOCK_SIZE/sizeof(int)];
-} Indirect;
