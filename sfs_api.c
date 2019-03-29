@@ -130,7 +130,7 @@ void init_sb(){
 	write_blocks(SB_POS, 1, &sb);
 }
 
-void mkssfs(int fresh){
+void mksfs(int fresh){
 	if(fresh == 0)
 		init_disk(DISK_NAME, BLOCK_SIZE, NUM_BLOCKS);
 	else{
@@ -224,7 +224,7 @@ int fdt_add(int (*dir_position)[2]){
 	return fdt_pos;
 }
 
-int ssfs_fopen(char *name){
+int sfs_fopen(char *name){
 	int dir_position[2] = {0, 0};
 
 	if(search_directory(name, &dir_position)==-1)
@@ -234,7 +234,7 @@ int ssfs_fopen(char *name){
 	return fdt_pos;
 }
 
-int ssfs_fclose(int fileID){
+int sfs_fclose(int fileID){
 	if(fileID < 0||fileID > NUM_INODES)
 		return -1;
 	if(fdt.dir_ptr[fileID][0]==-1)
@@ -246,14 +246,14 @@ int ssfs_fclose(int fileID){
 	return 0;
 }
 
-int ssfs_frseek(int fileID,int loc){
+int sfs_frseek(int fileID,int loc){
 	if(fdt.dir_ptr[fileID][0]==-1||loc<0||loc>get_inode_fdt(fileID).fsize||fileID<0)
 		return -1;
 	fdt.read_ptr[fileID] = loc;
 	return 0;
 }
 
-int ssfs_fwseek(int fileID, int loc){
+int sfs_fwseek(int fileID, int loc){
 	if(fdt.dir_ptr[fileID][0]==-1||loc<0||loc>get_inode_fdt(fileID).fsize||fileID<0)
 		return -1;
 	fdt.write_ptr[fileID] = loc;
@@ -301,7 +301,7 @@ int next_block(INode *node, int start_ptr){
 		return -1;
 }
 
-int ssfs_fwrite(int fileID, char *buf, int length){
+int sfs_fwrite(int fileID, char *buf, int length){
 	if(fileID<0||fdt.dir_ptr[fileID][0]==-1)
 		return -1;
 
@@ -341,7 +341,7 @@ int ssfs_fwrite(int fileID, char *buf, int length){
 	return amount_written;
 }
 
-int ssfs_fread(int fileID, char *buf, int length){
+int sfs_fread(int fileID, char *buf, int length){
 	if(fileID<0||fdt.dir_ptr[fileID][0]==-1||length < 0)
 		return -1;
 
@@ -425,7 +425,7 @@ void clear_dir_pos(int dir_position[2]){
 	write_blocks(dir_position[0], 1, &db);
 }
 
-int ssfs_remove(char *file){
+int sfs_remove(char *file){
 	int dir_position[2] = {0, 0};
 
 	if(search_directory(file, &dir_position)==-1)
@@ -433,7 +433,7 @@ int ssfs_remove(char *file){
 
 	int pid = search_fdt(dir_position);
 
-	ssfs_fclose(pid);
+	sfs_fclose(pid);
 	free_inode(&dir_position);
 	clear_dir_pos(dir_position);
 	return 0;

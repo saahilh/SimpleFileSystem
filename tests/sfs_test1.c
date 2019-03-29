@@ -20,7 +20,7 @@ int simple_test(){
 
 
   //Init fresh file system
-  mkssfs(1);
+  mksfs(1);
   //So now we should be able to open and close files ... 
   test_open_new_files(file_names, file_id, num_file, &err_no);
   test_close_files(file_names, file_id, num_file, &err_no);

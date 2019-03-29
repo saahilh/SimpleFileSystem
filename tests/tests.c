@@ -60,13 +60,13 @@ int test_persistence(int *error, int write_length){
         if(pid == 0){
             //Create new file system fresh
             printf("Checking Writing Files ... \n");
-            mkssfs(1);
-            file_id = ssfs_fopen(file_name);
+            mksfs(1);
+            file_id = sfs_fopen(file_name);
             if(file_id < 0){
                 fprintf(stderr, "Error. File id return negative\n");
             }
             for(int i = 0; i < 20; i++){
-                if(ssfs_fwrite(file_id, write_data[i], write_length) != write_length){
+                if(sfs_fwrite(file_id, write_data[i], write_length) != write_length){
                     fprintf(stderr ,"Error. Invalid Write Length ..\n");
                     error_num += 1;
                 }
@@ -88,15 +88,15 @@ int test_persistence(int *error, int write_length){
               if(pid == 0){
                   printf("Checking Reading Files ... \n");
                   char *read_buf = calloc(write_length + 1, sizeof(char));
-                  mkssfs(0);
-                  file_id = ssfs_fopen(file_name);
+                  mksfs(0);
+                  file_id = sfs_fopen(file_name);
                   if(file_id < 0){
                       fprintf(stderr, "Error. File id returned negative\n");
                       error_num += 1;
                   }
-                  ssfs_frseek(file_id, 0); //set seek to 0
+                  sfs_frseek(file_id, 0); //set seek to 0
                   for(int i = 0; i < 20; i++){
-                        if(ssfs_fread(file_id, read_buf,write_length) != write_length){
+                        if(sfs_fread(file_id, read_buf,write_length) != write_length){
                             fprintf(stderr, "Error. Invalid number read ... \n");
                             error_num += 1;
                         }else if(strcmp(read_buf, write_data[i]) != 0){
@@ -104,8 +104,8 @@ int test_persistence(int *error, int write_length){
                             error_num += 1;
                         }
                   }
-                  ssfs_fclose(file_id);   //Close file
-                  ssfs_remove(file_name); //Remove the file
+                  sfs_fclose(file_id);   //Close file
+                  sfs_remove(file_name); //Remove the file
                   free(read_buf);
                   for(int i = 0; i < 20; i++){
                       free(write_data[i]);
@@ -124,10 +124,10 @@ int test_persistence(int *error, int write_length){
                   }
                   char *read_buf = calloc(write_length + 1, sizeof(char));
                   read_buf[0] = '\0';
-                  mkssfs(0); //Initialize stale file system. Testing if remove worked
-                  file_id = ssfs_fopen(file_name);
-                  ssfs_frseek(file_id, 0); //set seek to 0
-                  if(ssfs_fread(file_id, read_buf, 512) > 0 && strlen(read_buf) > 0){
+                  mksfs(0); //Initialize stale file system. Testing if remove worked
+                  file_id = sfs_fopen(file_name);
+                  sfs_frseek(file_id, 0); //set seek to 0
+                  if(sfs_fread(file_id, read_buf, 512) > 0 && strlen(read_buf) > 0){
                       fprintf(stderr, "Error. File should have been removed\n");
                       error_num += 1;
                   }
@@ -162,24 +162,24 @@ int test_seek(int *file_id, int *file_size, int *write_ptr, char **write_buf, in
   int res;
   for(int i = 0; i < num_file; i++){
     //Just testing the shift for beyond seek boundaries before actually doing it. 
-    res = ssfs_frseek(file_id[i], -1);
+    res = sfs_frseek(file_id[i], -1);
     if(res >= 0)
-      fprintf(stderr, "Warning: ssfs_frseek returned positive. Negative seek location attempted. Potential frseek fail?\n");
-    res = ssfs_frseek(file_id[i], file_size[i] + 100);
+      fprintf(stderr, "Warning: sfs_frseek returned positive. Negative seek location attempted. Potential frseek fail?\n");
+    res = sfs_frseek(file_id[i], file_size[i] + 100);
     if(res >= 0)
-      fprintf(stderr, "Warning: ssfs_frseek returned positive. Seek location beyond file size attempted. Potential frseek fail?\n");
-    res = ssfs_fwseek(file_id[i], -1);
+      fprintf(stderr, "Warning: sfs_frseek returned positive. Seek location beyond file size attempted. Potential frseek fail?\n");
+    res = sfs_fwseek(file_id[i], -1);
     if(res >= 0)
-      fprintf(stderr, "Warning: ssfs_frseek returned positive. Negative seek location attempted. Potential fwseek fail?\n");
-    res = ssfs_fwseek(file_id[i], file_size[i] + 100);
+      fprintf(stderr, "Warning: sfs_frseek returned positive. Negative seek location attempted. Potential fwseek fail?\n");
+    res = sfs_fwseek(file_id[i], file_size[i] + 100);
     if(res >= 0)
-      fprintf(stderr, "Warning: ssfs_frseek returned positive. Seek location beyond file size attempted. Potential fwseek fail?\n");
-    res = ssfs_frseek(file_id[i], file_size[i] - offset);
+      fprintf(stderr, "Warning: sfs_frseek returned positive. Seek location beyond file size attempted. Potential fwseek fail?\n");
+    res = sfs_frseek(file_id[i], file_size[i] - offset);
     if(res < 0)
-      fprintf(stderr, "Warning: ssfs_frseek returned negative. Potential frseek fail?\n");
-    res = ssfs_fwseek(file_id[i], file_size[i] - offset);
+      fprintf(stderr, "Warning: sfs_frseek returned negative. Potential frseek fail?\n");
+    res = sfs_fwseek(file_id[i], file_size[i] - offset);
     if(res < 0)
-      fprintf(stderr, "Warning: ssfs_fwseek returned negative. Potential fwseek fail?\n");
+      fprintf(stderr, "Warning: sfs_fwseek returned negative. Potential fwseek fail?\n");
     write_ptr[i] -= offset;
     if(write_ptr[i] < 0)
       write_ptr[i] = 0;
@@ -197,14 +197,14 @@ int test_read_all_files(int *file_id, int *file_size, char **write_buf, int num_
   char *buf = calloc(MAX_BYTES + 1, sizeof(char));
   for(int i = 0; i < num_file; i++){
     //shift to start
-    res = ssfs_frseek(file_id[i], 0);
+    res = sfs_frseek(file_id[i], 0);
     if(res < 0)
-      fprintf(stderr, "Warning: ssfs_frseek returned negative. Potential frseek fail?\n");
-    res = ssfs_fread(file_id[i], buf, file_size[i]);
+      fprintf(stderr, "Warning: sfs_frseek returned negative. Potential frseek fail?\n");
+    res = sfs_fread(file_id[i], buf, file_size[i]);
     //Just a precaution. Don't think it's actually necessary
     buf[file_size[i]] = '\0';
     if(res != file_size[i])
-      fprintf(stderr, "Warning: ssfs_fread should return number of bytes read. Potential read fail?\n");
+      fprintf(stderr, "Warning: sfs_fread should return number of bytes read. Potential read fail?\n");
     //Compare both
     if(strcmp(buf, write_buf[i]) != 0){
       fprintf(stderr, "Error: \nRead failed.\n\n");
@@ -226,10 +226,10 @@ int test_simple_read_files(int *file_id, int *file_size, char **write_buf, int n
   char buf[512];
   for(int i = 0; i < num_file; i++){
     //Read at the read_ptr location
-    res = ssfs_fread(file_id[i], buf, strlen(test_str));
+    res = sfs_fread(file_id[i], buf, strlen(test_str));
     buf[strlen(test_str)] = '\0';
     if(res != strlen(test_str))
-      fprintf(stderr, "Warning: ssfs_fread should return number of bytes read. Potential read fail?\n");
+      fprintf(stderr, "Warning: sfs_fread should return number of bytes read. Potential read fail?\n");
     if(strcmp(buf, test_str) != 0){
       fprintf(stderr, "Error: \nRead failed. Read:\n%s\nShould have Read:\n%s\n", buf, test_str);
       *err_no += 1;
@@ -252,9 +252,9 @@ int test_simple_write_files(int *file_id, int *file_size, int *write_ptr, char *
     if(write_ptr[i] > file_size[i])
       file_size[i] = write_ptr[i];
     write_buf[i][file_size[i]] = '\0'; 
-    res = ssfs_fwrite(file_id[i], test_str, strlen(test_str));
+    res = sfs_fwrite(file_id[i], test_str, strlen(test_str));
     if(res != strlen(test_str))
-      fprintf(stderr, "Warning: ssfs_fwrite should return number of bytes written. Potential write fail?\n");
+      fprintf(stderr, "Warning: sfs_fwrite should return number of bytes written. Potential write fail?\n");
   }
   return 0;
 }
@@ -268,10 +268,10 @@ int test_difficult_read_files(int *file_id, int *file_size, int *write_ptr, char
     char *buf = calloc(read_length + 1, sizeof(char));
     char temp;
     //Just reads from the starting location and read_length long 
-    res = ssfs_fread(file_id[index], buf, read_length);
+    res = sfs_fread(file_id[index], buf, read_length);
     buf[read_length] = '\0';
     if(res != read_length)
-        fprintf(stderr, "Warning: ssfs_fread should return number of bytes read. Potential read fail?\n");
+        fprintf(stderr, "Warning: sfs_fread should return number of bytes read. Potential read fail?\n");
     //Just a trick so we can use strcmp
     temp = write_buf[index][write_ptr[index]];
     write_buf[index][write_ptr[index]] = '\0';
@@ -308,12 +308,12 @@ int test_random_read_files(int *file_id, int *file_size, int *write_ptr, char **
       start_index = rand()%(file_size[i] - read_length);
 
     //Shift read pointer
-    res = ssfs_frseek(file_id[i], start_index);
+    res = sfs_frseek(file_id[i], start_index);
     if(res < 0)
-      fprintf(stderr, "Warning: ssfs_frseek returned negative. Potential frseek fail?\n");
-    res = ssfs_fread(file_id[i], buf, read_length);
+      fprintf(stderr, "Warning: sfs_frseek returned negative. Potential frseek fail?\n");
+    res = sfs_fread(file_id[i], buf, read_length);
     if(res != read_length)
-      fprintf(stderr, "Warning: ssfs_fread should return number of bytes read. Potential read fail?\n");
+      fprintf(stderr, "Warning: sfs_fread should return number of bytes read. Potential read fail?\n");
     //A little trick so we can use strcmp
     temp = write_buf[i][start_index + read_length];
     write_buf[i][start_index + read_length] = '\0';
@@ -363,14 +363,14 @@ int test_difficult_write_files(int *file_id, int *file_size, int *write_ptr, cha
     }
     memcpy(write_buf[i] + sizeof(char) * write_ptr[i], text, strlen(text));
     //Change write location 
-    res = ssfs_fwseek(file_id[i], write_ptr[i]);
+    res = sfs_fwseek(file_id[i], write_ptr[i]);
     if(res < 0)
-      fprintf(stderr, "Warning: ssfs_fwseek returned negative. Potential fwseek fail?\n");
-    res = ssfs_frseek(file_id[i], write_ptr[i]);
+      fprintf(stderr, "Warning: sfs_fwseek returned negative. Potential fwseek fail?\n");
+    res = sfs_frseek(file_id[i], write_ptr[i]);
     //Shift the read location as well 
     if(res < 0)
-      fprintf(stderr, "Warning: ssfs_frseek returned negative. Potential frseek fail?\n");
-    res = ssfs_fwrite(file_id[i], text, strlen(text));
+      fprintf(stderr, "Warning: sfs_frseek returned negative. Potential frseek fail?\n");
+    res = sfs_fwrite(file_id[i], text, strlen(text));
     write_ptr[i] += strlen(text);
     if(write_ptr[i] > file_size[i]){
         file_size[i] = write_ptr[i];
@@ -378,7 +378,7 @@ int test_difficult_write_files(int *file_id, int *file_size, int *write_ptr, cha
     //Do some house keeping
     write_buf[i][file_size[i]] = '\0'; 
     if(res != strlen(text))
-      fprintf(stderr, "Warning: ssfs_fwrite should return number of bytes written. Potential write fail?\n");
+      fprintf(stderr, "Warning: sfs_fwrite should return number of bytes written. Potential write fail?\n");
     //Read test for if we wrote in properly
     test_difficult_read_files(file_id, file_size, write_ptr, write_buf, i, strlen(text), err_no);
     free(text);
@@ -406,12 +406,12 @@ int test_write_to_overflow(int *file_id, int *file_size, char **write_buf, int i
   }
   printf("Attempting to write to file cap. This will take a while\n");
       //Change the seek to the end of file.  
-  res = ssfs_fwseek(file_id[index], file_size[index]);
+  res = sfs_fwseek(file_id[index], file_size[index]);
   if(res < 0)
-        fprintf(stderr, "Warning: ssfs_frseek returned negative. Potential frseek fail?\n");
+        fprintf(stderr, "Warning: sfs_frseek returned negative. Potential frseek fail?\n");
   start_index = file_size[index];
 
-  //loop until we hit the absolute cap or your ssfs_fwrite fails. 
+  //loop until we hit the absolute cap or your sfs_fwrite fails. 
   for(;;){
     text = rand_text(MAX_WRITE_BYTE);
     //Reached 500 KB, we can stop now. 
@@ -422,7 +422,7 @@ int test_write_to_overflow(int *file_id, int *file_size, char **write_buf, int i
     }
 
     //When it fails, it should be OK. 
-    res = ssfs_fwrite(file_id[index], text, strlen(text));
+    res = sfs_fwrite(file_id[index], text, strlen(text));
     if(res <= 0){
         printf("Reached maximum file capacity. This is OK.\n Wrote %d bytes\n", file_size[index]);
         free(text);
@@ -438,11 +438,11 @@ int test_write_to_overflow(int *file_id, int *file_size, char **write_buf, int i
 
   for(int i = 0; i < num_written; i++){
     //Now we test if what was written in is valid. 
-    res = ssfs_frseek(file_id[index], start_index);
+    res = sfs_frseek(file_id[index], start_index);
     if(res < 0)
-          fprintf(stderr, "Warning: ssfs_frseek returned negative. Potential frseek fail?\n");
+          fprintf(stderr, "Warning: sfs_frseek returned negative. Potential frseek fail?\n");
     read_length = strlen(buffer[i]);
-    if(ssfs_fread(file_id[index], read_buffer, read_length) < 0){
+    if(sfs_fread(file_id[index], read_buffer, read_length) < 0){
         fprintf(stderr, "Error: Read Failed. \n");
         *err_no += 1;
     }else if(read_length != strlen(read_buffer)){
@@ -473,7 +473,7 @@ int test_read_write_out_of_bound(int *file_id, int *file_sizes, char **file_name
     char *buf;
     for(int i = 0; i < num_file; i++){
         //Attempt to write with a Negative length. Should return error. 
-        res = ssfs_fwrite(file_id[i], "OI", -1);
+        res = sfs_fwrite(file_id[i], "OI", -1);
         if(res > 0){
             fprintf(stderr, "Error: Invalid write length.\nWrote %d when was supposed to be %d\n\n", res, -1);
             *err_no += 1;
@@ -482,9 +482,9 @@ int test_read_write_out_of_bound(int *file_id, int *file_sizes, char **file_name
           fprintf(stderr, "Returned error. This is Ok\n");
         }
         //Attempt to read with a Negative length. Should return error. 
-        res = ssfs_fread(file_id[i], buf, -1);
+        res = sfs_fread(file_id[i], buf, -1);
         if(res > 0){
-        fprintf(stderr, "Error: ssfs_fread returned positive length. Requested %d read, Read %d\n", -1, res);
+        fprintf(stderr, "Error: sfs_fread returned positive length. Requested %d read, Read %d\n", -1, res);
         *err_no += 1;
         }else{
           fprintf(stderr, "Returned error. This is Ok\n");
@@ -492,10 +492,10 @@ int test_read_write_out_of_bound(int *file_id, int *file_sizes, char **file_name
         //Attempt to read far larger than file. Should return error. 
         buf = calloc(file_sizes[i] + ABS_CAP_FILE_SIZE, sizeof(char));
         //Shift read pointer to 0
-        res = ssfs_frseek(file_id[i], 0);
+        res = sfs_frseek(file_id[i], 0);
         if(res < 0)
-          fprintf(stderr, "Warning: ssfs_frseek returned positive. Negative seek location attempted. Potential frseek fail?\n");
-        res = ssfs_fread(file_id[i], buf, file_sizes[i] + ABS_CAP_FILE_SIZE);
+          fprintf(stderr, "Warning: sfs_frseek returned positive. Negative seek location attempted. Potential frseek fail?\n");
+        res = sfs_fread(file_id[i], buf, file_sizes[i] + ABS_CAP_FILE_SIZE);
         //When i read over the file size, return the maximum read amount
         if(res != file_sizes[i]){
             fprintf(stderr, "Error: Length read should be file size\nRequested %d to read, Should be Read: %d, Read %d\n", ABS_CAP_FILE_SIZE + file_sizes[i], file_sizes[i], res);
@@ -519,7 +519,7 @@ int test_overflow_open(int *file_id, int *file_sizes, int *write_ptr, char **fil
   //We are basically generate as many new names as possible. 
   for(int i = 0; i < num_file; i++){
     file_names[i] = rand_name();
-    file_id[i] = ssfs_fopen(file_names[i]);
+    file_id[i] = sfs_fopen(file_names[i]);
     //If we hit the cap and the file_id return is negative, we are good and stop
     if(file_id[i] < 0){
         printf("File %s failed to open\n", file_names[i]);
@@ -545,7 +545,7 @@ int test_overflow_open(int *file_id, int *file_sizes, int *write_ptr, char **fil
   //We are basically generate as many new names as possible. 
   for(int i = 0; i < num_file; i++){
     file_names[i] = rand_name();
-    file_id[i] = ssfs_fopen(file_names[i]);
+    file_id[i] = sfs_fopen(file_names[i]);
     //If we hit the cap and the file_id return is negative, we are good and stop
     if(file_id[i] < 0){
         printf("File %s failed to open\n", file_names[i]);
@@ -583,9 +583,9 @@ int test_remove_files(int *file_id, int *file_size, int *write_ptr, char **file_
   int res;
   for(int i = 0; i < num_file && i < ABS_CAP_FD; i++){
     printf("File Removed %s\n", file_names[i]);
-    res = ssfs_remove(file_names[i]);
+    res = sfs_remove(file_names[i]);
     if(res < 0)
-      fprintf(stderr, "Warning: ssfs_fclose returned negative value. Potential fclose fail?\n");
+      fprintf(stderr, "Warning: sfs_fclose returned negative value. Potential fclose fail?\n");
     file_size[i] = 0;
     write_ptr[i] = 0;
     free(file_names[i]);
@@ -612,39 +612,39 @@ int test_close_files(char **file_names, int *file_id, int num_file, int *err_no)
     if(file_id[i] > max)
       max = file_id[i];
   for(int i = 0; i < num_file; i++){
-    res = ssfs_fclose(file_id[i]);
+    res = sfs_fclose(file_id[i]);
     if(res < 0){
-      fprintf(stderr, "ERROR: ssfs_fclose failed %s\n", file_names[i]);
+      fprintf(stderr, "ERROR: sfs_fclose failed %s\n", file_names[i]);
       *err_no += 1;
     }
     //Try closing the file again
-    res = ssfs_fclose(file_id[i]);
+    res = sfs_fclose(file_id[i]);
     if(res >= 0){
-      fprintf(stderr, "Error: ssfs_fclose returned positive. Did it actually close the file %s?\n", file_names[i]);
+      fprintf(stderr, "Error: sfs_fclose returned positive. Did it actually close the file %s?\n", file_names[i]);
       *err_no += 1;
     }else{
       fprintf(stderr, "Failed to close. This is OK.\n");
     }
     //Now I'll just try to close a file with negative file_id
-    res = ssfs_fclose(-MAX_BYTES);
+    res = sfs_fclose(-MAX_BYTES);
     if(res >= 0){
-      fprintf(stderr, "Error: ssfs_fclose returned positive. Attempted to close a file %s with file_id %d\n", file_names[i], -MAX_BYTES);
+      fprintf(stderr, "Error: sfs_fclose returned positive. Attempted to close a file %s with file_id %d\n", file_names[i], -MAX_BYTES);
       *err_no += 1;
     }else{
       fprintf(stderr, "Failed to close. This is OK.\n");
     }
     //Finally, we end this with an attempt to open beyond the current file limit. 
-    res = ssfs_fclose(max + 1);
+    res = sfs_fclose(max + 1);
     if(res >= 0){
-      fprintf(stderr, "Error: ssfs_fclose returned positive. Attempted to close a file %s with file_id %d\n", file_names[i], 1 + max);
+      fprintf(stderr, "Error: sfs_fclose returned positive. Attempted to close a file %s with file_id %d\n", file_names[i], 1 + max);
       *err_no += 1;
     }else{
       fprintf(stderr, "Failed to close. This is OK.\n");
     }
     //Attempts to write closed file. This should fail. 
-    res = ssfs_fread(file_id[i], buf, strlen(test_str));
+    res = sfs_fread(file_id[i], buf, strlen(test_str));
     if(res > 0){
-      fprintf(stderr, "Error: ssfs_fread returned positive length. File %s should be closed\n", file_names[i]);
+      fprintf(stderr, "Error: sfs_fread returned positive length. File %s should be closed\n", file_names[i]);
       *err_no += 1;
     }else{
       fprintf(stderr, "Failed to read. This is OK.\n");
@@ -664,7 +664,7 @@ int test_open_new_files(char **file_names, int *file_id, int num_file, int *err_
     return 0;
   //We always keep this one close to heart
   file_names[0] = strdup("test.pdf");
-  file_id[0] = ssfs_fopen(file_names[0]);
+  file_id[0] = sfs_fopen(file_names[0]);
   printf("File Opened %s\n", file_names[0]);
   if (file_id[0] < 0) {
     fprintf(stderr, "ERROR: Cannot open file %s\n", file_names[0]);
@@ -674,7 +674,7 @@ int test_open_new_files(char **file_names, int *file_id, int num_file, int *err_
   for(int i = 1; i < num_file; i++){
     file_names[i] = rand_name();
     printf("File Opened %s\n", file_names[i]);
-    file_id[i] = ssfs_fopen(file_names[i]);
+    file_id[i] = sfs_fopen(file_names[i]);
     if (file_id[i] < 0) {
       fprintf(stderr, "ERROR: Cannot open file %s\n", file_names[i]);
       *err_no += 1;
@@ -702,7 +702,7 @@ int test_open_old_files(char **file_names, int *file_id, int num_file, int *err_
   if(num_file < 1)
     return 0;
   //We don't generate new file names but same as above
-  file_id[0] = ssfs_fopen(file_names[0]);
+  file_id[0] = sfs_fopen(file_names[0]);
   printf("File Opened %s\n", file_names[0]);
   if (file_id[0] < 0) {
     fprintf(stderr, "ERROR: Cannot open file %s\n", file_names[0]);
@@ -710,7 +710,7 @@ int test_open_old_files(char **file_names, int *file_id, int num_file, int *err_
   }
   for(int i = 1; i < num_file; i++){
     printf("File Opened %s\n", file_names[i]);
-    file_id[i] = ssfs_fopen(file_names[i]);
+    file_id[i] = sfs_fopen(file_names[i]);
     if (file_id[i] < 0) {
       fprintf(stderr, "ERROR: Cannot open file %s\n", file_names[i]);
       *err_no += 1;
