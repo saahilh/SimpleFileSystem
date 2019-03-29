@@ -1,0 +1,78 @@
+//Functions you should implement. 
+//Return -1 for error besides mkssfs
+void mkssfs(int fresh);
+int ssfs_fopen(char *name);
+int ssfs_fclose(int fileID);
+int ssfs_frseek(int fileID, int loc);
+int ssfs_fwseek(int fileID, int loc);
+int ssfs_fwrite(int fileID, char *buf, int length);
+int ssfs_fread(int fileID, char *buf, int length);
+int ssfs_remove(char *file);
+int ssfs_commit();
+int ssfs_restore(int cnum);
+
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <string.h>
+#include <fcntl.h>
+#include "tests/disk_emu.h"
+
+#define DISK_NAME 		"shamay_disk"
+#define BLOCK_SIZE 		1024
+#define NUM_BLOCKS 		1024
+#define NUM_ATTR_BLOCKS 	3		//sb, fbm, wm
+#define INODE_SIZE 		16
+#define NUM_DIR_BLOCKS		4
+
+#define SB_POS			0
+#define DB_POS			1
+#define INB_POS			DB_POS + NUM_DIR_BLOCKS
+#define FBM_POS			NUM_BLOCKS - 2
+#define WM_POS			NUM_BLOCKS - 1
+
+#define MAGIC_NUM 		0xACBD0005
+#define NAME_SIZE		10
+
+#define DIR_BLOCK_SIZE		BLOCK_SIZE/(NAME_SIZE+8)
+#define NUM_INODE_BLOCKS	14
+#define NUM_INODES_PER_INB	BLOCK_SIZE/(INODE_SIZE*sizeof(int))
+#define NUM_INODES 		NUM_DIR_BLOCKS*DIR_BLOCK_SIZE
+
+typedef struct file_descr_table_t{
+	int dir_ptr[NUM_INODES][2];
+	int read_ptr[NUM_INODES];
+	int write_ptr[NUM_INODES];
+} FileDescrTable;
+
+typedef struct inode_t{
+	int fsize;
+	int direct[INODE_SIZE - 2];
+	int indirect;
+} INode;
+
+typedef struct inode_block_t{
+	INode inodes[NUM_INODES_PER_INB];
+	char filler[BLOCK_SIZE];
+} INodeBlock;
+
+typedef struct super_block_t{
+	int magic_num;
+	int block_size;
+	char filler[BLOCK_SIZE];
+} SuperBlock;
+
+typedef struct directory_block_t{
+	char names[DIR_BLOCK_SIZE][NAME_SIZE];
+	int position[DIR_BLOCK_SIZE][2]; //position[0] = block num; position[1] = i node num within block
+	char filler[BLOCK_SIZE];
+} DirectoryBlock;
+
+typedef struct block_t{
+	unsigned char bytes[BLOCK_SIZE];
+} Block;
+
+typedef struct indirect{
+	int block_ptrs[BLOCK_SIZE/sizeof(int)];
+} Indirect;
