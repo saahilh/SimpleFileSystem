@@ -22,9 +22,9 @@ int sfs_restore(int cnum);
 #define DISK_NAME 		"shamay_disk"
 #define BLOCK_SIZE 		1024
 #define NUM_BLOCKS 		1024
-#define NUM_ATTR_BLOCKS 	3		//sb, fbm, wm
+#define NUM_ATTR_BLOCKS 3		//sb, fbm, wm
 #define INODE_SIZE 		16
-#define NUM_DIR_BLOCKS		4
+#define NUM_DIR_BLOCKS	4
 
 #define SB_POS			0
 #define DB_POS			1
@@ -38,7 +38,7 @@ int sfs_restore(int cnum);
 #define DIR_BLOCK_SIZE		BLOCK_SIZE/(NAME_SIZE+8)
 #define NUM_INODE_BLOCKS	14
 #define NUM_INODES_PER_INB	BLOCK_SIZE/(INODE_SIZE*sizeof(int))
-#define NUM_INODES 		NUM_DIR_BLOCKS*DIR_BLOCK_SIZE
+#define NUM_INODES 			NUM_DIR_BLOCKS*DIR_BLOCK_SIZE
 
 typedef struct super_block_t{
 	int magic_num;
@@ -49,12 +49,12 @@ typedef struct super_block_t{
 typedef struct open_file_t{
 	int directory_number;
 	int offset;
+	int read_ptr;
+	int write_ptr;
 } OpenFile;
 
 typedef struct file_descr_table_t{
 	OpenFile open_files[NUM_INODES];
-	int read_ptr[NUM_INODES];
-	int write_ptr[NUM_INODES];
 } FileDescrTable;
 
 typedef struct inode_t{
@@ -73,12 +73,12 @@ typedef struct inode_block_t{
 } INodeBlock;
 
 typedef struct directory_entry_t{
+	char name[NAME_SIZE];
 	int block_number;
-	int inode_number;
+	int entry_number;
 } DirectoryEntry;
 
 typedef struct directory_block_t{
-	char names[DIR_BLOCK_SIZE][NAME_SIZE];
 	DirectoryEntry directory_entries[DIR_BLOCK_SIZE];
 	char filler[BLOCK_SIZE];
 } DirectoryBlock;
