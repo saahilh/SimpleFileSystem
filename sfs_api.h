@@ -1,5 +1,5 @@
-//Functions you should implement. 
-//Return -1 for error besides mksfs
+//Returns -1 for errors besides mksfs
+
 void mksfs(int fresh);
 int sfs_fopen(char *name);
 int sfs_fclose(int fileID);
@@ -8,8 +8,6 @@ int sfs_fwseek(int fileID, int loc);
 int sfs_fwrite(int fileID, char *buf, int length);
 int sfs_fread(int fileID, char *buf, int length);
 int sfs_remove(char *file);
-int sfs_commit();
-int sfs_restore(int cnum);
 
 
 #include <stdio.h>
