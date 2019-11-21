@@ -2,7 +2,10 @@
 
 FileDescrTable fdt;
 
-void set_free_bytes(int block_id, int byte, int num_bytes)
+void 
+set_free_bytes(	int block_id, 
+								int byte, 
+								int num_bytes)
 {
 	if(block_id==FBM_POS||block_id==WM_POS)
 	{
@@ -23,7 +26,9 @@ void set_free_bytes(int block_id, int byte, int num_bytes)
 	}
 }
 
-void set_busy_bytes(int block_id, int byte, int num_bytes)
+void set_busy_bytes(int block_id, 
+										int byte, 
+										int num_bytes)
 {
 	if(block_id==FBM_POS||block_id==WM_POS)
 	{
@@ -44,7 +49,8 @@ void set_busy_bytes(int block_id, int byte, int num_bytes)
 	}
 }
 
-INode get_inode(int dir_position[2])
+INode 
+get_inode(int dir_position[2])
 {
 	DirectoryBlock db;
 
@@ -60,13 +66,16 @@ INode get_inode(int dir_position[2])
 	return inb.inodes[inb_offset];
 }
 
-INode get_inode_fdt(int fileID)
+INode 
+get_inode_fdt(int fileID)
 {
 	int dir_position[2] = { fdt.open_files[fileID].directory_number, fdt.open_files[fileID].offset };
 	return get_inode(dir_position);
 }
 
-void write_inode(int dir_position[2], INode* new_node)
+void 
+write_inode(int dir_position[2], 
+						INode *new_node)
 {
 	DirectoryBlock db;
 	int dir_num = dir_position[0];
@@ -81,13 +90,16 @@ void write_inode(int dir_position[2], INode* new_node)
 	write_blocks(inb_num, 1, &inb);
 }
 
-void write_inode_fdt(int fileID, INode* node)
+void 
+write_inode_fdt(int fileID, 
+								INode* node)
 {
 	int dir_position[2] = { fdt.open_files[fileID].directory_number, fdt.open_files[fileID].offset };
 	write_inode(dir_position, node);
 }
 
-int find_free_inode(int inb_position[2])
+int 
+find_free_inode(int inb_position[2])
 {
 	INodeBlock current_block;
 
@@ -110,7 +122,8 @@ int find_free_inode(int inb_position[2])
 	return -1;
 }
 
-int find_free_file(int dir_position[2])
+int 
+find_free_file(int dir_position[2])
 {
 	DirectoryBlock db;
 	
@@ -131,7 +144,8 @@ int find_free_file(int dir_position[2])
 	return -1;		
 }
 
-int find_free_block()
+int 
+find_free_block()
 {
 	Block fbm;
 	read_blocks(FBM_POS, 1, &fbm);
@@ -146,7 +160,8 @@ int find_free_block()
 	return -1;
 }
 
-void init_block(int block_num)
+void 
+init_block(int block_num)
 {
 	set_busy_bytes(FBM_POS, block_num, 1);
 	Block init;
@@ -154,7 +169,8 @@ void init_block(int block_num)
 	write_blocks(block_num, 1, &init);
 }
 
-void init_sb()
+void 
+init_sb()
 {
 	SuperBlock sb;
 	init_block(0);
@@ -164,7 +180,8 @@ void init_sb()
 	write_blocks(SB_POS, 1, &sb);
 }
 
-void mksfs(int fresh)
+void 
+mksfs(int fresh)
 {
 	if(fresh == 0)
 	{
@@ -183,7 +200,9 @@ void mksfs(int fresh)
 	memset(&fdt, -1, sizeof(fdt)); //initialize fdt
 }
 
-int search_directory(char* name, int dir_position[2])
+int 
+search_directory(	char *name, 
+									int dir_position[2])
 {
 	DirectoryBlock current_directory;
 
@@ -205,7 +224,7 @@ int search_directory(char* name, int dir_position[2])
 
 				index.block_number = dir_num;
 				index.entry_index = offset;
-				
+
 				return 0;
 			}
 		}
@@ -214,7 +233,10 @@ int search_directory(char* name, int dir_position[2])
 	return -1;
 }
 
-void store_file_data(char* name, int dir_position[2], int inb_position[2])
+void 
+store_file_data(char *name, 
+								int dir_position[2], 
+								int inb_position[2])
 {
 	DirectoryBlock db;
 	read_blocks(dir_position[0], 1, &db);
@@ -228,7 +250,9 @@ void store_file_data(char* name, int dir_position[2], int inb_position[2])
 	write_blocks(dir_position[0], 1, &db);
 }
 
-int new_file(char* name, int dir_position[2])
+int 
+new_file(	char *name, 
+					int dir_position[2])
 {
 	int inb_position[2] = { 0, 0 };
 	
@@ -254,7 +278,8 @@ int new_file(char* name, int dir_position[2])
 	}
 }
 
-int fdt_add(int dir_position[2])
+int 
+fdt_add(int dir_position[2])
 {
 	int fdt_pos = 0;
 
@@ -289,7 +314,8 @@ int fdt_add(int dir_position[2])
 	return fdt_pos;
 }
 
-int sfs_fopen(char* name)
+int 
+sfs_fopen(char *name)
 {
 	int dir_position[2] = { 0, 0 };
 
@@ -305,7 +331,8 @@ int sfs_fopen(char* name)
 	return fdt_pos;
 }
 
-int sfs_fclose(int fileID)
+int 
+sfs_fclose(int fileID)
 {
 	if(fileID < 0 || fileID > NUM_INODES || fdt.open_files[fileID].directory_number==-1)
 	{
@@ -320,7 +347,10 @@ int sfs_fclose(int fileID)
 	return 0;
 }
 
-int set_ptr(int* ptr, int fileID, int loc)
+int 
+set_ptr(	int *ptr, 
+					int fileID, 
+					int loc)
 {
 	if(loc<0 || fdt.open_files[fileID].directory_number==-1 || loc>get_inode_fdt(fileID).fsize || fileID<0)
 	{
@@ -331,17 +361,23 @@ int set_ptr(int* ptr, int fileID, int loc)
 	return 0;
 }
 
-int sfs_frseek(int fileID, int loc)
+int 
+sfs_frseek(	int fileID, 
+						int loc)
 {
 	return set_ptr(&fdt.open_files[fileID].read_ptr, fileID, loc);
 }
 
-int sfs_fwseek(int fileID, int loc)
+int 
+sfs_fwseek(	int fileID, 
+						int loc)
 {
 	return set_ptr(&fdt.open_files[fileID].write_ptr, fileID, loc);
 }
 
-int next_block(INode* node, int start_ptr)
+int 
+next_block(	INode *node, 
+						int start_ptr)
 {
 	int ptr = start_ptr / BLOCK_SIZE;
 
@@ -403,7 +439,10 @@ int next_block(INode* node, int start_ptr)
 	}
 }
 
-int sfs_fwrite(int fileID, char* buf, int length)
+int 
+sfs_fwrite(	int fileID, 
+						char *buf, 
+						int length)
 {
 	if(fileID<0||fdt.open_files[fileID].directory_number==-1)
 	{
@@ -456,7 +495,10 @@ int sfs_fwrite(int fileID, char* buf, int length)
 	return amount_written;
 }
 
-int sfs_fread(int fileID, char* buf, int length)
+int 
+sfs_fread(int fileID, 
+					char* buf, 
+					int length)
 {
 	if(fileID<0||fdt.open_files[fileID].directory_number==-1||length < 0)
 	{
@@ -507,7 +549,8 @@ int sfs_fread(int fileID, char* buf, int length)
 	return amount_read;
 }
 
-void free_inode(int dir_position[2])
+void 
+free_inode(int dir_position[2])
 {
 	INode to_free = get_inode(dir_position);
 
@@ -544,7 +587,8 @@ void free_inode(int dir_position[2])
 	write_inode(dir_position, &to_free);
 }
 
-int get_pid(int dir_position[2])
+int 
+get_pid(int dir_position[2])
 {
 	int found = 0;
 	
@@ -560,7 +604,8 @@ int get_pid(int dir_position[2])
 	return -1;
 }
 
-void clear_dir_pos(int dir_position[2])
+void 
+clear_dir_pos(int dir_position[2])
 {
 	DirectoryBlock db;
 	read_blocks(dir_position[0], 1, &db);
@@ -573,7 +618,8 @@ void clear_dir_pos(int dir_position[2])
 	write_blocks(dir_position[0], 1, &db);
 }
 
-int sfs_remove(char* file)
+int 
+sfs_remove(char* file)
 {
 	int dir_position[2] = { 0, 0 };
 
