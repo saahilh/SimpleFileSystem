@@ -97,6 +97,13 @@ typedef struct directory_block_t
 } 
 DirectoryBlock;
 
+typedef struct directory_index_t
+{
+	int block_number;
+	int entry_index;
+}
+DirectoryIndex;
+
 typedef struct block_t
 {
 	unsigned char bytes[BLOCK_SIZE];
