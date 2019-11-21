@@ -187,15 +187,25 @@ int search_directory(char* name, int dir_position[2])
 {
 	DirectoryBlock current_directory;
 
+	DirectoryIndex index;
+
+	index.block_number = 0;
+	index.entry_index = 0;
+
 	for(int dir_num = START_OF_DIRECTORY_BLOCKS; dir_num < START_OF_DIRECTORY_BLOCKS + NUM_DIR_BLOCKS; dir_num++)
 	{
 		read_blocks(dir_num, 1, &current_directory);
+
 		for(int offset = 0; offset < DIR_BLOCK_SIZE; offset++)
 		{
 			if(strcmp(name, current_directory.directory_entries[offset].name)==0)
 			{
 				dir_position[0] = dir_num;
 				dir_position[1] = offset;
+
+				index.block_number = dir_num;
+				index.entry_index = offset;
+				
 				return 0;
 			}
 		}
