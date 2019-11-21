@@ -26,9 +26,10 @@ set_free_bytes(int block_id,
 	}
 }
 
-void set_busy_bytes(int block_id, 
-										int byte, 
-										int num_bytes)
+void 
+set_busy_bytes(int block_id, 
+							 int byte, 
+							 int num_bytes)
 {
 	if (block_id==FBM_POS||block_id==WM_POS)
 	{
