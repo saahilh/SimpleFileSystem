@@ -279,7 +279,7 @@ new_file(char *name,
 }
 
 int 
-fdt_add(int dir_position[2])
+fdt_add(DirectoryIndex directory_index)
 {
 	int fdt_pos = 0;
 
@@ -293,21 +293,18 @@ fdt_add(int dir_position[2])
 		return -1;
 	}
 
-	int dir_num = dir_position[0];
-	int dir_offset = dir_position[1];
-
 	DirectoryBlock db;
-	read_blocks(dir_num, 1, &db);
+	read_blocks(directory_index.block_number, 1, &db);
 
-	int inb_num = db.directory_entries[dir_offset].block_number;
-	int inb_offset = db.directory_entries[dir_offset].entry_number;
+	int inb_num = db.directory_entries[directory_index.entry_index].block_number;
+	int inb_offset = db.directory_entries[directory_index.entry_index].entry_number;
 
 	INodeBlock inb;
 	read_blocks(inb_num, 1, &inb);
 
 	OpenFile *file = &fdt.open_files[fdt_pos];
-	file -> directory_number = dir_num;
-	file -> offset = dir_offset;
+	file -> directory_number = directory_index.block_number;
+	file -> offset = directory_index.entry_index;
 	file -> read_ptr = 0;
 	file -> write_ptr = inb.inodes[inb_offset].fsize;
 
@@ -326,9 +323,14 @@ sfs_fopen(char *name)
 		{
 			return -1;
 		}
+		else
+		{
+			directory_index.block_number = dir_position[0];
+			directory_index.entry_index = dir_position[1];
+		}
 	}
-		
-	int fdt_pos = fdt_add(dir_position);
+	
+	int fdt_pos = fdt_add(directory_index);
 	return fdt_pos;
 }
 
