@@ -92,7 +92,7 @@ write_inode(int dir_position[2],
 
 void 
 write_inode_fdt(int fileID, 
-								INode* node)
+								INode *node)
 {
 	int dir_position[2] = { fdt.open_files[fileID].directory_number, fdt.open_files[fileID].offset };
 	write_inode(dir_position, node);
@@ -241,7 +241,7 @@ store_file_data(char *name,
 	DirectoryBlock db;
 	read_blocks(dir_position[0], 1, &db);
 
-	DirectoryEntry* current_entry = &db.directory_entries[dir_position[1]];
+	DirectoryEntry *current_entry = &db.directory_entries[dir_position[1]];
 
 	memcpy(current_entry -> name, name, NAME_SIZE);
 	current_entry -> block_number = inb_position[0];
@@ -305,7 +305,7 @@ fdt_add(int dir_position[2])
 	INodeBlock inb;
 	read_blocks(inb_num, 1, &inb);
 
-	OpenFile* file = &fdt.open_files[fdt_pos];
+	OpenFile *file = &fdt.open_files[fdt_pos];
 	file -> directory_number = dir_num;
 	file -> offset = dir_offset;
 	file -> read_ptr = 0;
@@ -339,7 +339,7 @@ sfs_fclose(int fileID)
 		return -1;
 	}
 	
-	OpenFile* file = &fdt.open_files[fileID];
+	OpenFile *file = &fdt.open_files[fileID];
 	file -> directory_number = -1;
 	file -> offset = -1;
 	file -> read_ptr = -1;
@@ -497,7 +497,7 @@ sfs_fwrite(	int fileID,
 
 int 
 sfs_fread(int fileID, 
-					char* buf, 
+					char *buf, 
 					int length)
 {
 	if(fileID<0||fdt.open_files[fileID].directory_number==-1||length < 0)
@@ -610,7 +610,7 @@ clear_dir_pos(int dir_position[2])
 	DirectoryBlock db;
 	read_blocks(dir_position[0], 1, &db);
 	
-	DirectoryEntry* current_entry = &db.directory_entries[dir_position[1]];
+	DirectoryEntry *current_entry = &db.directory_entries[dir_position[1]];
 	memset(current_entry -> name, -1, NAME_SIZE);
 	current_entry -> block_number = -1;
 	current_entry -> entry_number = -1;
@@ -619,7 +619,7 @@ clear_dir_pos(int dir_position[2])
 }
 
 int 
-sfs_remove(char* file)
+sfs_remove(char *file)
 {
 	int dir_position[2] = { 0, 0 };
 
