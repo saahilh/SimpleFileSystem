@@ -9,7 +9,6 @@ int sfs_fwrite(int fileID, char *buf, int length);
 int sfs_fread(int fileID, char *buf, int length);
 int sfs_remove(char *file);
 
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -25,8 +24,8 @@ int sfs_remove(char *file);
 #define NUM_DIR_BLOCKS	4
 
 #define SB_POS			0
-#define DB_POS			1
-#define INB_POS			DB_POS + NUM_DIR_BLOCKS
+#define START_OF_DIRECTORY_BLOCKS			1
+#define INB_POS			START_OF_DIRECTORY_BLOCKS + NUM_DIR_BLOCKS
 #define FBM_POS			NUM_BLOCKS - 2
 #define WM_POS			NUM_BLOCKS - 1
 

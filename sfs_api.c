@@ -114,7 +114,7 @@ int find_free_file(int dir_position[2])
 {
 	DirectoryBlock db;
 	
-	for(int dir_num = DB_POS; dir_num < DB_POS + NUM_DIR_BLOCKS; dir_num++)
+	for(int dir_num = START_OF_DIRECTORY_BLOCKS; dir_num < START_OF_DIRECTORY_BLOCKS + NUM_DIR_BLOCKS; dir_num++)
 	{
 		read_blocks(dir_num, 1, &db);
 		for(int dir_offset = 0; dir_offset < DIR_BLOCK_SIZE; dir_offset++)
@@ -176,7 +176,7 @@ void mksfs(int fresh)
 		set_busy_bytes(FBM_POS, FBM_POS, 2); //fbm - set fbm and wm to busy
 		set_busy_bytes(WM_POS, FBM_POS, 2); // wm - set fbm and wm to busy
 		init_sb();
-		for(int block_num = DB_POS; block_num < DB_POS + NUM_DIR_BLOCKS + NUM_INODE_BLOCKS; block_num++){
+		for(int block_num = START_OF_DIRECTORY_BLOCKS; block_num < START_OF_DIRECTORY_BLOCKS + NUM_DIR_BLOCKS + NUM_INODE_BLOCKS; block_num++){
 			init_block(block_num);
 		}
 	}
@@ -187,7 +187,7 @@ int search_directory(char* name, int dir_position[2])
 {
 	DirectoryBlock current_directory;
 
-	for(int dir_num = DB_POS; dir_num < DB_POS + NUM_DIR_BLOCKS; dir_num++)
+	for(int dir_num = START_OF_DIRECTORY_BLOCKS; dir_num < START_OF_DIRECTORY_BLOCKS + NUM_DIR_BLOCKS; dir_num++)
 	{
 		read_blocks(dir_num, 1, &current_directory);
 		for(int offset = 0; offset < DIR_BLOCK_SIZE; offset++)
