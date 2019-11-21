@@ -7,7 +7,7 @@ set_free_bytes(	int block_id,
 								int byte, 
 								int num_bytes)
 {
-	if(block_id==FBM_POS||block_id==WM_POS)
+	if (block_id==FBM_POS||block_id==WM_POS)
 	{
 		Block buffer;
 		read_blocks(block_id, 1, &buffer);
@@ -30,7 +30,7 @@ void set_busy_bytes(int block_id,
 										int byte, 
 										int num_bytes)
 {
-	if(block_id==FBM_POS||block_id==WM_POS)
+	if (block_id==FBM_POS||block_id==WM_POS)
 	{
 		Block buffer;
 		read_blocks(block_id, 1, &buffer);
@@ -108,7 +108,7 @@ find_free_inode(int inb_position[2])
 		read_blocks(block_num, 1, &current_block);
 		for(int offset = 0; offset < NUM_INODES_PER_INB; offset++)
 		{
-			if(current_block.inodes[offset].fsize==-1)
+			if (current_block.inodes[offset].fsize==-1)
 			{
 				inb_position[0] = block_num;
 				inb_position[1] = offset;
@@ -132,7 +132,7 @@ find_free_file(int dir_position[2])
 		read_blocks(dir_num, 1, &db);
 		for(int dir_offset = 0; dir_offset < DIR_BLOCK_SIZE; dir_offset++)
 		{
-			if(db.directory_entries[dir_offset].block_number==-1)
+			if (db.directory_entries[dir_offset].block_number==-1)
 			{
 				dir_position[0] = dir_num;
 				dir_position[1] = dir_offset;
@@ -151,7 +151,7 @@ find_free_block()
 	read_blocks(FBM_POS, 1, &fbm);
 	for(int i = 0; i < NUM_BLOCKS; i++)
 	{
-		if(!(fbm.bytes[i]%2))
+		if (!(fbm.bytes[i]%2))
 		{ //if lsb = 1
 			return i;
 		}
@@ -183,7 +183,7 @@ init_sb()
 void 
 mksfs(int fresh)
 {
-	if(fresh == 0)
+	if (fresh == 0)
 	{
 		init_disk(DISK_NAME, BLOCK_SIZE, NUM_BLOCKS);
 	}
@@ -217,7 +217,7 @@ search_directory(	char *name,
 
 		for(int offset = 0; offset < DIR_BLOCK_SIZE; offset++)
 		{
-			if(strcmp(name, current_directory.directory_entries[offset].name)==0)
+			if (strcmp(name, current_directory.directory_entries[offset].name)==0)
 			{
 				dir_position[0] = dir_num;
 				dir_position[1] = offset;
@@ -256,7 +256,7 @@ new_file(	char *name,
 {
 	int inb_position[2] = { 0, 0 };
 	
-	if(find_free_file(dir_position)==-1 || find_free_inode(inb_position)==-1)
+	if (find_free_file(dir_position)==-1 || find_free_inode(inb_position)==-1)
 	{
 		return -1;
 	}
@@ -265,7 +265,7 @@ new_file(	char *name,
 
 	int new_block = find_free_block();	
 	
-	if(new_block == -1)
+	if (new_block == -1)
 	{
 		return -1;
 	}
@@ -288,7 +288,7 @@ fdt_add(int dir_position[2])
 		fdt_pos++;
 	}
 
-	if(fdt_pos==NUM_INODES)
+	if (fdt_pos==NUM_INODES)
 	{
 		return -1;
 	}
@@ -319,9 +319,9 @@ sfs_fopen(char *name)
 {
 	int dir_position[2] = { 0, 0 };
 
-	if(search_directory(name, dir_position)==-1)
+	if (search_directory(name, dir_position)==-1)
 	{
-		if(new_file(name, dir_position)==-1)
+		if (new_file(name, dir_position)==-1)
 		{
 			return -1;
 		}
@@ -334,7 +334,7 @@ sfs_fopen(char *name)
 int 
 sfs_fclose(int fileID)
 {
-	if(fileID < 0 || fileID > NUM_INODES || fdt.open_files[fileID].directory_number==-1)
+	if (fileID < 0 || fileID > NUM_INODES || fdt.open_files[fileID].directory_number==-1)
 	{
 		return -1;
 	}
@@ -352,7 +352,7 @@ set_ptr(	int *ptr,
 					int fileID, 
 					int loc)
 {
-	if(loc<0 || fdt.open_files[fileID].directory_number==-1 || loc>get_inode_fdt(fileID).fsize || fileID<0)
+	if (loc<0 || fdt.open_files[fileID].directory_number==-1 || loc>get_inode_fdt(fileID).fsize || fileID<0)
 	{
 		return -1;
 	}
@@ -381,24 +381,24 @@ next_block(	INode *node,
 {
 	int ptr = start_ptr / BLOCK_SIZE;
 
-	if(ptr!=0&&ptr%BLOCK_SIZE==0)
+	if (ptr!=0&&ptr%BLOCK_SIZE==0)
 	{
 		ptr--;
 	}
 
-	if(ptr>(BLOCK_SIZE/sizeof(int) + 13))
+	if (ptr>(BLOCK_SIZE/sizeof(int) + 13))
 	{
 		return -1;
 	}
-	else if(ptr >= 14 && ptr < 13 + (BLOCK_SIZE/sizeof(int)))
+	else if (ptr >= 14 && ptr < 13 + (BLOCK_SIZE/sizeof(int)))
 	{
 		ptr-=13;
 		Indirect more;
 		memset(&more, -1, sizeof(more));
 
-		if(node -> indirect==-1)
+		if (node -> indirect==-1)
 		{
-			if((node -> indirect = find_free_block())==-1)
+			if ((node -> indirect = find_free_block())==-1)
 			{
 				return -1;
 			}
@@ -407,9 +407,9 @@ next_block(	INode *node,
 
 		read_blocks(node -> indirect, 1, &more);
 
-		if(more.block_ptrs[ptr]==-1)
+		if (more.block_ptrs[ptr]==-1)
 		{
-			if((more.block_ptrs[ptr] = find_free_block())==-1)
+			if ((more.block_ptrs[ptr] = find_free_block())==-1)
 			{
 				return -1;
 			}
@@ -422,9 +422,9 @@ next_block(	INode *node,
 	}
 	else if (ptr < 14 && ptr > -1)
 	{
-		if(node -> direct[ptr]==-1)
+		if (node -> direct[ptr]==-1)
 		{
-			if((node -> direct[ptr] = find_free_block())==-1)
+			if ((node -> direct[ptr] = find_free_block())==-1)
 			{
 				return -1;
 			}
@@ -444,7 +444,7 @@ sfs_fwrite(	int fileID,
 						char *buf, 
 						int length)
 {
-	if(fileID<0||fdt.open_files[fileID].directory_number==-1)
+	if (fileID<0||fdt.open_files[fileID].directory_number==-1)
 	{
 		return -1;
 	}
@@ -459,7 +459,7 @@ sfs_fwrite(	int fileID,
 		int current_pos = fdt.open_files[fileID].write_ptr + amount_written;
 		int current_block = next_block(&node, current_pos);
 
-		if(current_block==-1)
+		if (current_block==-1)
 		{
 			return -1;
 		}
@@ -469,7 +469,7 @@ sfs_fwrite(	int fileID,
 
 		read_blocks(current_block, 1, &write_buf.bytes);
 
-		if(length < free_space && length!=0)
+		if (length < free_space && length!=0)
 		{
 			free_space = length;
 		}
@@ -486,7 +486,7 @@ sfs_fwrite(	int fileID,
 	
 	fdt.open_files[fileID].write_ptr += amount_written;
 	
-	if(node.fsize < fdt.open_files[fileID].write_ptr)
+	if (node.fsize < fdt.open_files[fileID].write_ptr)
 	{
 		node.fsize = fdt.open_files[fileID].write_ptr;
 		write_inode_fdt(fileID, &node);
@@ -500,7 +500,7 @@ sfs_fread(int fileID,
 					char *buf, 
 					int length)
 {
-	if(fileID<0||fdt.open_files[fileID].directory_number==-1||length < 0)
+	if (fileID<0||fdt.open_files[fileID].directory_number==-1||length < 0)
 	{
 		return -1;
 	}
@@ -510,7 +510,7 @@ sfs_fread(int fileID,
 
 	int amount_read = 0;
 
-	if(fdt.open_files[fileID].read_ptr + length > node.fsize)
+	if (fdt.open_files[fileID].read_ptr + length > node.fsize)
 	{
 		length = node.fsize - fdt.open_files[fileID].read_ptr;
 	}
@@ -524,14 +524,14 @@ sfs_fread(int fileID,
 
 		int offset = fdt.open_files[fileID].read_ptr % BLOCK_SIZE;
 
-		if(read_space==0||current_block>NUM_BLOCKS||current_block==-1)
+		if (read_space==0||current_block>NUM_BLOCKS||current_block==-1)
 		{
 			break;
 		}
 
 		read_blocks(current_block, 1, &read_buf.bytes);
 
-		if(length < read_space)
+		if (length < read_space)
 		{
 			read_space = length;
 		}
@@ -556,7 +556,7 @@ free_inode(int dir_position[2])
 
 	for(int ptr_num = 0; ptr_num < 14; ptr_num++)
 	{
-		if(to_free.direct[ptr_num]==-1)
+		if (to_free.direct[ptr_num]==-1)
 		{
 			continue;
 		}
@@ -566,13 +566,13 @@ free_inode(int dir_position[2])
 		}
 	}
 	
-	if(to_free.indirect!=-1)
+	if (to_free.indirect!=-1)
 	{
 		Indirect to_free_ind;
 		read_blocks(to_free.indirect, 1, &to_free_ind);
 
 		for(int ind_ptr_num = 0; ind_ptr_num < (BLOCK_SIZE / sizeof(int)); ind_ptr_num++)
-			if(to_free_ind.block_ptrs[ind_ptr_num]==-1)
+			if (to_free_ind.block_ptrs[ind_ptr_num]==-1)
 			{
 				continue;
 			}
@@ -594,7 +594,7 @@ get_pid(int dir_position[2])
 	
 	while(found < NUM_INODES)
 	{
-		if(fdt.open_files[found].directory_number==dir_position[0]&&fdt.open_files[found].offset==dir_position[1])
+		if (fdt.open_files[found].directory_number==dir_position[0]&&fdt.open_files[found].offset==dir_position[1])
 		{
 			return found;
 		}
@@ -623,7 +623,7 @@ sfs_remove(char *file)
 {
 	int dir_position[2] = { 0, 0 };
 
-	if(search_directory(file, dir_position)==-1)
+	if (search_directory(file, dir_position)==-1)
 	{
 		return -1;
 	}
