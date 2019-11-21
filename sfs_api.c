@@ -3,9 +3,9 @@
 FileDescrTable fdt;
 
 void 
-set_free_bytes(	int block_id, 
-								int byte, 
-								int num_bytes)
+set_free_bytes(int block_id, 
+							 int byte, 
+							 int num_bytes)
 {
 	if (block_id==FBM_POS||block_id==WM_POS)
 	{
@@ -201,8 +201,8 @@ mksfs(int fresh)
 }
 
 int 
-search_directory(	char *name, 
-									int dir_position[2])
+search_directory(char *name, 
+								 int dir_position[2])
 {
 	DirectoryBlock current_directory;
 
@@ -251,8 +251,8 @@ store_file_data(char *name,
 }
 
 int 
-new_file(	char *name, 
-					int dir_position[2])
+new_file(char *name, 
+				 int dir_position[2])
 {
 	int inb_position[2] = { 0, 0 };
 	
@@ -348,9 +348,9 @@ sfs_fclose(int fileID)
 }
 
 int 
-set_ptr(	int *ptr, 
-					int fileID, 
-					int loc)
+set_ptr(int *ptr, 
+				int fileID, 
+				int loc)
 {
 	if (loc<0 || fdt.open_files[fileID].directory_number==-1 || loc>get_inode_fdt(fileID).fsize || fileID<0)
 	{
@@ -362,22 +362,22 @@ set_ptr(	int *ptr,
 }
 
 int 
-sfs_frseek(	int fileID, 
-						int loc)
+sfs_frseek(int fileID, 
+					 int loc)
 {
 	return set_ptr(&fdt.open_files[fileID].read_ptr, fileID, loc);
 }
 
 int 
-sfs_fwseek(	int fileID, 
-						int loc)
+sfs_fwseek(int fileID, 
+					 int loc)
 {
 	return set_ptr(&fdt.open_files[fileID].write_ptr, fileID, loc);
 }
 
 int 
-next_block(	INode *node, 
-						int start_ptr)
+next_block(INode *node, 
+					 int start_ptr)
 {
 	int ptr = start_ptr / BLOCK_SIZE;
 
@@ -440,9 +440,9 @@ next_block(	INode *node,
 }
 
 int 
-sfs_fwrite(	int fileID, 
-						char *buf, 
-						int length)
+sfs_fwrite(int fileID, 
+					 char *buf, 
+					 int length)
 {
 	if (fileID<0||fdt.open_files[fileID].directory_number==-1)
 	{
