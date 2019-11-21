@@ -202,7 +202,7 @@ mksfs(int fresh)
 }
 
 DirectoryIndex
-search_directory(char *name)
+search_directory(char *target_file_name)
 {
 	DirectoryIndex directory_index;
 
@@ -218,7 +218,9 @@ search_directory(char *name)
 
 		for(int current_entry_number = 0; current_entry_number < DIR_BLOCK_SIZE; current_entry_number++)
 		{
-			if (strcmp(name, current_directory.directory_entries[current_entry_number].name)==0)
+			char *current_file_name = current_directory.directory_entries[current_entry_number].name;
+
+			if (strcmp(target_file_name, current_file_name)==0)
 			{
 				directory_index.block_number = current_directory_block_number;
 				directory_index.entry_index = current_entry_number;
