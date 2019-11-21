@@ -200,37 +200,34 @@ mksfs(int fresh)
 	memset(&fdt, -1, sizeof(fdt)); //initialize fdt
 }
 
-int 
-search_directory(char *name, 
-								 int dir_position[2])
+DirectoryIndex
+search_directory(char *name)
 {
-	DirectoryBlock current_directory;
+	DirectoryIndex directory_index;
 
-	DirectoryIndex index;
+	directory_index.block_number = -1;
+	directory_index.entry_index = -1;
 
-	index.block_number = 0;
-	index.entry_index = 0;
-
-	for(int dir_num = START_OF_DIRECTORY_BLOCKS; dir_num < START_OF_DIRECTORY_BLOCKS + NUM_DIR_BLOCKS; dir_num++)
+	for(int current_directory_block_number = START_OF_DIRECTORY_BLOCKS; 
+			 current_directory_block_number < START_OF_DIRECTORY_BLOCKS + NUM_DIR_BLOCKS; 
+			 current_directory_block_number++)
 	{
-		read_blocks(dir_num, 1, &current_directory);
+		DirectoryBlock current_directory;
+		read_blocks(current_directory_block_number, 1, &current_directory);
 
-		for(int offset = 0; offset < DIR_BLOCK_SIZE; offset++)
+		for(int current_entry_number = 0; current_entry_number < DIR_BLOCK_SIZE; current_entry_number++)
 		{
-			if (strcmp(name, current_directory.directory_entries[offset].name)==0)
+			if (strcmp(name, current_directory.directory_entries[current_entry_number].name)==0)
 			{
-				dir_position[0] = dir_num;
-				dir_position[1] = offset;
+				directory_index.block_number = current_directory_block_number;
+				directory_index.entry_index = current_entry_number;
 
-				index.block_number = dir_num;
-				index.entry_index = offset;
-
-				return 0;
+				break;
 			}
 		}
 	}
 
-	return -1;
+	return directory_index;
 }
 
 void 
@@ -317,9 +314,10 @@ fdt_add(int dir_position[2])
 int 
 sfs_fopen(char *name)
 {
-	int dir_position[2] = { 0, 0 };
+	DirectoryIndex directory_index = search_directory(name);
+	int dir_position[2] = { directory_index.block_number, directory_index.entry_index };
 
-	if (search_directory(name, dir_position)==-1)
+	if (directory_index.block_number==-1)
 	{
 		if (new_file(name, dir_position)==-1)
 		{
@@ -621,12 +619,14 @@ clear_dir_pos(int dir_position[2])
 int 
 sfs_remove(char *file)
 {
-	int dir_position[2] = { 0, 0 };
+	DirectoryIndex directory_index = search_directory(file);
 
-	if (search_directory(file, dir_position)==-1)
+	if (directory_index.block_number==-1)
 	{
 		return -1;
 	}
+
+	int dir_position[2] = { directory_index.block_number, directory_index.entry_index };
 
 	sfs_fclose(get_pid(dir_position));
 	free_inode(dir_position);

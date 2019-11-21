@@ -35,7 +35,7 @@ int 	sfs_remove	(char *file);
 #define FBM_POS			NUM_BLOCKS - 2
 #define WM_POS			NUM_BLOCKS - 1
 
-#define MAGIC_NUM 		0xACBD0005
+#define MAGIC_NUM 	0xACBD0005
 #define NAME_SIZE		10
 
 #define DIR_BLOCK_SIZE		BLOCK_SIZE/(NAME_SIZE+8)
