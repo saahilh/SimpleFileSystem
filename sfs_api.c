@@ -62,7 +62,7 @@ INode get_inode(int dir_position[2])
 
 INode get_inode_fdt(int fileID)
 {
-	int dir_position[2] = {fdt.open_files[fileID].directory_number, fdt.open_files[fileID].offset};
+	int dir_position[2] = { fdt.open_files[fileID].directory_number, fdt.open_files[fileID].offset };
 	return get_inode(dir_position);
 }
 
@@ -83,7 +83,7 @@ void write_inode(int dir_position[2], INode* new_node)
 
 void write_inode_fdt(int fileID, INode* node)
 {
-	int dir_position[2] = {fdt.open_files[fileID].directory_number, fdt.open_files[fileID].offset};
+	int dir_position[2] = { fdt.open_files[fileID].directory_number, fdt.open_files[fileID].offset };
 	write_inode(dir_position, node);
 }
 
@@ -220,7 +220,7 @@ void store_file_data(char* name, int dir_position[2], int inb_position[2])
 
 int new_file(char* name, int dir_position[2])
 {
-	int inb_position[2] = {0, 0};
+	int inb_position[2] = { 0, 0 };
 	
 	if(find_free_file(dir_position)==-1 || find_free_inode(inb_position)==-1)
 	{
@@ -281,7 +281,7 @@ int fdt_add(int dir_position[2])
 
 int sfs_fopen(char* name)
 {
-	int dir_position[2] = {0, 0};
+	int dir_position[2] = { 0, 0 };
 
 	if(search_directory(name, dir_position)==-1)
 	{
@@ -565,7 +565,7 @@ void clear_dir_pos(int dir_position[2])
 
 int sfs_remove(char* file)
 {
-	int dir_position[2] = {0, 0};
+	int dir_position[2] = { 0, 0 };
 
 	if(search_directory(file, dir_position)==-1)
 	{
