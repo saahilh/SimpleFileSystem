@@ -53,45 +53,53 @@ typedef struct open_file_t
 	int offset;
 	int read_ptr;
 	int write_ptr;
-} OpenFile;
+} 
+OpenFile;
 
 typedef struct file_descr_table_t
 {
 	OpenFile open_files[NUM_INODES];
-} FileDescrTable;
+} 
+FileDescrTable;
 
 typedef struct inode_t
 {
 	int fsize;
 	int direct[INODE_SIZE - 2];
 	int indirect;
-} INode;
+} 
+INode;
 
 typedef struct indirect
 {
 	int block_ptrs[BLOCK_SIZE/sizeof(int)];
-} Indirect;
+} 
+Indirect;
 
 typedef struct inode_block_t
 {
 	INode inodes[NUM_INODES_PER_INB];
 	char filler[BLOCK_SIZE];
-} INodeBlock;
+} 
+INodeBlock;
 
 typedef struct directory_entry_t
 {
 	char name[NAME_SIZE];
 	int block_number;
 	int entry_number;
-} DirectoryEntry;
+} 
+DirectoryEntry;
 
 typedef struct directory_block_t
 {
 	DirectoryEntry directory_entries[DIR_BLOCK_SIZE];
 	char filler[BLOCK_SIZE];
-} DirectoryBlock;
+} 
+DirectoryBlock;
 
 typedef struct block_t
 {
 	unsigned char bytes[BLOCK_SIZE];
-} Block;
+} 
+Block;
