@@ -171,22 +171,6 @@ search_directory(char *target_file_name)
 	return directory_index;
 }
 
-int 
-find_free_block()
-{
-	Block fbm;
-	read_blocks(FBM_POS, 1, &fbm);
-	for(int i = 0; i < NUM_BLOCKS; i++)
-	{
-		if (!(fbm.bytes[i]%2))
-		{ //if lsb = 1
-			return i;
-		}
-	}
-
-	return -1;
-}
-
 void 
 init_block(int block_num)
 {
@@ -194,6 +178,25 @@ init_block(int block_num)
 	Block init;
 	memset(&init, -1, sizeof(init));
 	write_blocks(block_num, 1, &init);
+}
+
+int 
+get_and_init_next_free_block()
+{
+	Block fbm;
+
+	read_blocks(FBM_POS, 1, &fbm);
+
+	for(int i = 0; i < NUM_BLOCKS; i++)
+	{
+		if (!(fbm.bytes[i]%2))
+		{ //if lsb = 1
+			init_block(i);
+			return i;
+		}
+	}
+
+	return -1;
 }
 
 void 
@@ -262,7 +265,7 @@ new_file(char *name,
 	
 	INode node = get_inode(inb_position);
 
-	int new_block = find_free_block();	
+	int new_block = get_and_init_next_free_block();	
 	
 	if (new_block == -1)
 	{
@@ -270,7 +273,6 @@ new_file(char *name,
 	}
 	else
 	{
-		init_block(new_block);
 		node.direct[0] = new_block;
 		store_file_data(name, dir_position, inb_position);
 		return 0;
@@ -381,7 +383,7 @@ bool
 get_or_create_indirect_block(INode *node, Indirect *indirect){
 	if(node -> indirect == -1)
 	{
-		int next_free_block = find_free_block();
+		int next_free_block = get_and_init_next_free_block();
 
 		if (next_free_block == -1)
 		{
@@ -389,7 +391,6 @@ get_or_create_indirect_block(INode *node, Indirect *indirect){
 		}
 
 		node -> indirect = next_free_block;
-		init_block(node -> indirect);
 	}
 
 	read_blocks(node -> indirect, 1, indirect);
@@ -436,18 +437,19 @@ next_block(INode *node,
 
 	if (*block_index==-1)
 	{
-		if ((*block_index = find_free_block())==-1)
+		*block_index = get_and_init_next_free_block();
+
+		if (*block_index ==-1)
 		{
 			return -1;
 		}
 
-		init_block(*block_index);
 		if (indirect)
 		{
 			write_blocks(node -> indirect, 1, &more);
 		}
 	}
-	
+
 	return *block_index;	
 }
 
