@@ -406,12 +406,16 @@ next_block(INode *node,
 	}
 
 	int file_block_number = start_ptr / BLOCK_SIZE;
+	int *block_index;
+
+	bool indirect = false;
+	Indirect more;
 
 	if (file_block_number >= NUMBER_OF_DIRECT_POINTERS_PER_INODE)
 	{
+		indirect = true;
 		file_block_number-=13;
 
-		Indirect more;
 		int success = get_or_create_indirect_block(node, &more);
 
 		if (!success)
@@ -419,34 +423,32 @@ next_block(INode *node,
 			return -1;
 		}
 
-		if (more.block_ptrs[file_block_number]==-1)
-		{
-			if ((more.block_ptrs[file_block_number] = find_free_block())==-1)
-			{
-				return -1;
-			}
-
-			init_block(more.block_ptrs[file_block_number]);
-			write_blocks(node -> indirect, 1, &more);
-		}
-
-		return more.block_ptrs[file_block_number];
+		block_index = &more.block_ptrs[file_block_number];
 	}
 	else if (file_block_number < 14 && file_block_number > -1)
 	{
-		if (node -> direct[file_block_number]==-1)
-		{
-			if ((node -> direct[file_block_number] = find_free_block())==-1)
-			{
-				return -1;
-			}
-
-			init_block(node -> direct[file_block_number]);
-		}
-		return node -> direct[file_block_number];	
+		block_index = &(node -> direct[file_block_number]);
+	}
+	else
+	{
+		return -1;
 	}
 
-	return -1;
+	if (*block_index==-1)
+	{
+		if ((*block_index = find_free_block())==-1)
+		{
+			return -1;
+		}
+
+		init_block(*block_index);
+		if (indirect)
+		{
+			write_blocks(node -> indirect, 1, &more);
+		}
+	}
+	
+	return *block_index;	
 }
 
 int 
