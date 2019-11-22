@@ -377,33 +377,47 @@ sfs_fwseek(int fileID,
 	return set_ptr(&fdt.open_files[fileID].write_ptr, fileID, loc);
 }
 
+bool
+get_or_create_indirect_block(INode *node, Indirect *indirect){
+	if(node -> indirect == -1)
+	{
+		int next_free_block = find_free_block();
+
+		if (next_free_block == -1)
+		{
+			return false;
+		}
+
+		node -> indirect = next_free_block;
+		init_block(node -> indirect);
+	}
+
+	read_blocks(node -> indirect, 1, indirect);
+	return true;
+}
+
 int 
 next_block(INode *node, 
 					 int start_ptr)
 {
-	if(start_ptr > MAX_FILE_SIZE)
+	if(start_ptr >= MAX_FILE_SIZE)
 	{
 		return -1;
 	}
 
 	int file_block_number = start_ptr / BLOCK_SIZE;
 
-	if (file_block_number >= 14 && file_block_number < 13 + (BLOCK_SIZE/sizeof(int)))
+	if (file_block_number >= NUMBER_OF_DIRECT_POINTERS_PER_INODE)
 	{
 		file_block_number-=13;
+
 		Indirect more;
-		memset(&more, -1, sizeof(more));
+		int success = get_or_create_indirect_block(node, &more);
 
-		if (node -> indirect==-1)
+		if (!success)
 		{
-			if ((node -> indirect = find_free_block())==-1)
-			{
-				return -1;
-			}
-			init_block(node -> indirect);
+			return -1;
 		}
-
-		read_blocks(node -> indirect, 1, &more);
 
 		if (more.block_ptrs[file_block_number]==-1)
 		{
@@ -431,10 +445,8 @@ next_block(INode *node,
 		}
 		return node -> direct[file_block_number];	
 	}
-	else
-	{
-		return -1;
-	}
+
+	return -1;
 }
 
 int 

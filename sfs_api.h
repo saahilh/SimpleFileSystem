@@ -21,6 +21,7 @@ int 	sfs_remove	(char *file);
 #include <string.h>
 #include <fcntl.h>
 #include "tests/disk_emu.h"
+#include <stdbool.h>
 
 #define DISK_NAME 		"shamay_disk"
 #define BLOCK_SIZE 		1024
@@ -45,7 +46,8 @@ int 	sfs_remove	(char *file);
 
 #define NUMBER_OF_DIRECT_POINTERS_PER_INODE	INODE_SIZE - 2
 #define	NUMBER_OF_INDIRECT_POINTERS_IN_BLOCK	BLOCK_SIZE / sizeof(int)
-#define MAX_FILE_SIZE		(NUMBER_OF_DIRECT_POINTERS_PER_INODE + NUMBER_OF_INDIRECT_POINTERS_IN_BLOCK) * BLOCK_SIZE
+#define MAX_BLOCKS_IN_FILE	NUMBER_OF_DIRECT_POINTERS_PER_INODE + NUMBER_OF_INDIRECT_POINTERS_IN_BLOCK
+#define MAX_FILE_SIZE		MAX_BLOCKS_IN_FILE * BLOCK_SIZE
 
 typedef struct super_block_t
 {
