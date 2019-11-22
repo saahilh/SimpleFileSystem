@@ -232,51 +232,44 @@ mksfs(int fresh)
 
 void 
 store_file_data(char *name, 
-								int dir_position[2], 
+								DirectoryIndex directory_index, 
 								int inb_position[2])
 {
 	DirectoryBlock db;
-	read_blocks(dir_position[0], 1, &db);
+	read_blocks(directory_index.block_number, 1, &db);
 
-	DirectoryEntry *current_entry = &db.directory_entries[dir_position[1]];
+	DirectoryEntry *current_entry = &db.directory_entries[directory_index.entry_index];
 
 	memcpy(current_entry -> name, name, NAME_SIZE);
 	current_entry -> block_number = inb_position[0];
 	current_entry -> entry_number = inb_position[1];
 
-	write_blocks(dir_position[0], 1, &db);
+	write_blocks(directory_index.block_number, 1, &db);
 }
 
-int 
-new_file(char *name, 
-				 int dir_position[2])
+DirectoryIndex
+new_file(char *name)
 {
 	int inb_position[2] = { 0, 0 };
 	
 	DirectoryIndex next_free_directory_index = search_directory(NULL);
 
-	dir_position[0] = next_free_directory_index.block_number;
-	dir_position[1] = next_free_directory_index.entry_index;
-
 	if (next_free_directory_index.block_number==-1 || find_free_inode(inb_position)==-1)
 	{
-		return -1;
+		return next_free_directory_index;
 	}
 	
 	INode node = get_inode(inb_position);
 
 	int new_block = get_and_init_next_free_block();	
 	
-	if (new_block == -1)
-	{
-		return -1;
-	}
-	else
+	if (new_block != -1)
 	{
 		node.direct[0] = new_block;
-		store_file_data(name, dir_position, inb_position);
-		return 0;
+		store_file_data(name, next_free_directory_index, inb_position);
 	}
+
+	return next_free_directory_index;
 }
 
 int 
@@ -320,14 +313,10 @@ sfs_fopen(char *name)
 
 	if (directory_index.block_number==-1)
 	{
-		if (new_file(name, dir_position)==-1)
-		{
+		directory_index = new_file(name);
+
+		if(directory_index.block_number==-1){
 			return -1;
-		}
-		else
-		{
-			directory_index.block_number = dir_position[0];
-			directory_index.entry_index = dir_position[1];
 		}
 	}
 	
