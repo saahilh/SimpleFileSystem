@@ -123,26 +123,52 @@ find_free_inode(int inb_position[2])
 	return -1;
 }
 
-int 
-find_free_file(int dir_position[2])
+DirectoryIndex
+search_directory(char *target_file_name)
 {
-	DirectoryBlock db;
-	
-	for(int dir_num = START_OF_DIRECTORY_BLOCKS; dir_num < START_OF_DIRECTORY_BLOCKS + NUM_DIR_BLOCKS; dir_num++)
+	DirectoryIndex directory_index;
+
+	directory_index.block_number = -1;
+	directory_index.entry_index = -1;
+
+	for(int current_directory_block_number = START_OF_DIRECTORY_BLOCKS; 
+			 current_directory_block_number < START_OF_DIRECTORY_BLOCKS + NUM_DIR_BLOCKS; 
+			 current_directory_block_number++)
 	{
-		read_blocks(dir_num, 1, &db);
-		for(int dir_offset = 0; dir_offset < DIR_BLOCK_SIZE; dir_offset++)
+		DirectoryBlock current_directory;
+		read_blocks(current_directory_block_number, 1, &current_directory);
+
+		for(int current_entry_number = 0; current_entry_number < DIR_BLOCK_SIZE; current_entry_number++)
 		{
-			if (db.directory_entries[dir_offset].block_number==-1)
+
+			if(target_file_name==NULL)
 			{
-				dir_position[0] = dir_num;
-				dir_position[1] = dir_offset;
-				return 0;
+				int current_file_block = current_directory.directory_entries[current_entry_number].block_number;
+
+				if (current_file_block==-1)
+				{
+					directory_index.block_number = current_directory_block_number;
+					directory_index.entry_index = current_entry_number;
+
+					break;
+				}
+			}
+			else
+			{
+				char *current_file_name = current_directory.directory_entries[current_entry_number].name;
+
+				if (strcmp(target_file_name, current_file_name)==0)
+				{
+					directory_index.block_number = current_directory_block_number;
+					directory_index.entry_index = current_entry_number;
+
+					break;
+				}
 			}
 		}
 	}
-	
-	return -1;		
+
+	return directory_index;
 }
 
 int 
@@ -201,38 +227,6 @@ mksfs(int fresh)
 	memset(&fdt, -1, sizeof(fdt)); //initialize fdt
 }
 
-DirectoryIndex
-search_directory(char *target_file_name)
-{
-	DirectoryIndex directory_index;
-
-	directory_index.block_number = -1;
-	directory_index.entry_index = -1;
-
-	for(int current_directory_block_number = START_OF_DIRECTORY_BLOCKS; 
-			 current_directory_block_number < START_OF_DIRECTORY_BLOCKS + NUM_DIR_BLOCKS; 
-			 current_directory_block_number++)
-	{
-		DirectoryBlock current_directory;
-		read_blocks(current_directory_block_number, 1, &current_directory);
-
-		for(int current_entry_number = 0; current_entry_number < DIR_BLOCK_SIZE; current_entry_number++)
-		{
-			char *current_file_name = current_directory.directory_entries[current_entry_number].name;
-
-			if (strcmp(target_file_name, current_file_name)==0)
-			{
-				directory_index.block_number = current_directory_block_number;
-				directory_index.entry_index = current_entry_number;
-
-				break;
-			}
-		}
-	}
-
-	return directory_index;
-}
-
 void 
 store_file_data(char *name, 
 								int dir_position[2], 
@@ -256,7 +250,12 @@ new_file(char *name,
 {
 	int inb_position[2] = { 0, 0 };
 	
-	if (find_free_file(dir_position)==-1 || find_free_inode(inb_position)==-1)
+	DirectoryIndex next_free_directory_index = search_directory(NULL);
+
+	dir_position[0] = next_free_directory_index.block_number;
+	dir_position[1] = next_free_directory_index.entry_index;
+
+	if (next_free_directory_index.block_number==-1 || find_free_inode(inb_position)==-1)
 	{
 		return -1;
 	}
