@@ -58,21 +58,6 @@ typedef struct super_block_t
 
 //---------------------------------------------------------------
 
-typedef struct open_file_t
-{
-	int directory_number;
-	int offset;
-	int read_ptr;
-	int write_ptr;
-} 
-OpenFile;
-
-typedef struct file_descr_table_t
-{
-	OpenFile open_files[NUM_INODES];
-} 
-FileDescrTable;
-
 typedef struct inode_t
 {
 	int fsize;
@@ -121,3 +106,17 @@ typedef struct block_t
 	unsigned char bytes[BLOCK_SIZE];
 } 
 Block;
+
+typedef struct open_file_t
+{
+	DirectoryIndex directory_index;
+	int read_ptr;
+	int write_ptr;
+} 
+OpenFile;
+
+typedef struct file_descr_table_t
+{
+	OpenFile open_files[NUM_INODES];
+} 
+FileDescrTable;

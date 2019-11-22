@@ -70,7 +70,7 @@ get_inode(int dir_position[2])
 INode 
 get_inode_fdt(int fileID)
 {
-	int dir_position[2] = { fdt.open_files[fileID].directory_number, fdt.open_files[fileID].offset };
+	int dir_position[2] = { fdt.open_files[fileID].directory_index.block_number, fdt.open_files[fileID].directory_index.entry_index };
 	return get_inode(dir_position);
 }
 
@@ -95,7 +95,7 @@ void
 write_inode_fdt(int fileID, 
 								INode *node)
 {
-	int dir_position[2] = { fdt.open_files[fileID].directory_number, fdt.open_files[fileID].offset };
+	int dir_position[2] = { fdt.open_files[fileID].directory_index.block_number, fdt.open_files[fileID].directory_index.entry_index };
 	write_inode(dir_position, node);
 }
 
@@ -140,7 +140,6 @@ search_directory(char *target_file_name)
 
 		for(int current_entry_number = 0; current_entry_number < DIR_BLOCK_SIZE; current_entry_number++)
 		{
-
 			if(target_file_name==NULL)
 			{
 				int current_file_block = current_directory.directory_entries[current_entry_number].block_number;
@@ -276,8 +275,8 @@ int
 fdt_add(DirectoryIndex directory_index)
 {
 	int fdt_pos = 0;
-
-	while(fdt.open_files[fdt_pos].directory_number!=-1&&fdt_pos<NUM_INODES)
+	
+	while(fdt.open_files[fdt_pos].directory_index.block_number!=-1&&fdt_pos<NUM_INODES)
 	{
 		fdt_pos++;
 	}
@@ -297,8 +296,8 @@ fdt_add(DirectoryIndex directory_index)
 	read_blocks(inb_num, 1, &inb);
 
 	OpenFile *file = &fdt.open_files[fdt_pos];
-	file -> directory_number = directory_index.block_number;
-	file -> offset = directory_index.entry_index;
+
+	file -> directory_index = directory_index;
 	file -> read_ptr = 0;
 	file -> write_ptr = inb.inodes[inb_offset].fsize;
 
@@ -309,13 +308,13 @@ int
 sfs_fopen(char *name)
 {
 	DirectoryIndex directory_index = search_directory(name);
-	int dir_position[2] = { directory_index.block_number, directory_index.entry_index };
 
 	if (directory_index.block_number==-1)
 	{
 		directory_index = new_file(name);
 
-		if(directory_index.block_number==-1){
+		if(directory_index.block_number==-1)
+		{
 			return -1;
 		}
 	}
@@ -327,14 +326,18 @@ sfs_fopen(char *name)
 int 
 sfs_fclose(int fileID)
 {
-	if (fileID < 0 || fileID > NUM_INODES || fdt.open_files[fileID].directory_number==-1)
+	if (fileID < 0 || fileID > NUM_INODES || fdt.open_files[fileID].directory_index.block_number==-1)
 	{
 		return -1;
 	}
 	
 	OpenFile *file = &fdt.open_files[fileID];
-	file -> directory_number = -1;
-	file -> offset = -1;
+	DirectoryIndex directory_index;
+
+	directory_index.block_number = -1;
+	directory_index.entry_index = -1;
+
+	file -> directory_index = directory_index;
 	file -> read_ptr = -1;
 	file -> write_ptr = -1;
 	return 0;
@@ -345,7 +348,7 @@ set_ptr(int *ptr,
 				int fileID, 
 				int loc)
 {
-	if (loc<0 || fdt.open_files[fileID].directory_number==-1 || loc>get_inode_fdt(fileID).fsize || fileID<0)
+	if (loc<0 || fdt.open_files[fileID].directory_index.block_number==-1 || loc>get_inode_fdt(fileID).fsize || fileID<0)
 	{
 		return -1;
 	}
@@ -447,7 +450,7 @@ sfs_fwrite(int fileID,
 					 char *buf, 
 					 int length)
 {
-	if (fileID<0||fdt.open_files[fileID].directory_number==-1)
+	if (fileID<0||fdt.open_files[fileID].directory_index.block_number==-1)
 	{
 		return -1;
 	}
@@ -503,7 +506,7 @@ sfs_fread(int fileID,
 					char *buf, 
 					int length)
 {
-	if (fileID<0||fdt.open_files[fileID].directory_number==-1||length < 0)
+	if (fileID<0||fdt.open_files[fileID].directory_index.block_number==-1||length < 0)
 	{
 		return -1;
 	}
@@ -583,7 +586,6 @@ free_inode(int dir_position[2])
 			{
 				set_free_bytes(FBM_POS, to_free_ind.block_ptrs[ind_ptr_num], 1);
 			}
-			
 	}
 	
 	memset(&to_free, -1, sizeof(to_free));
@@ -591,13 +593,16 @@ free_inode(int dir_position[2])
 }
 
 int 
-get_pid(int dir_position[2])
+get_pid(DirectoryIndex directory_index)
 {
 	int found = 0;
 	
 	while(found < NUM_INODES)
 	{
-		if (fdt.open_files[found].directory_number==dir_position[0]&&fdt.open_files[found].offset==dir_position[1])
+		OpenFile current_open_file = fdt.open_files[found];
+
+		if (current_open_file.directory_index.block_number==directory_index.block_number 
+			  && current_open_file.directory_index.entry_index==directory_index.entry_index)
 		{
 			return found;
 		}
@@ -633,7 +638,7 @@ sfs_remove(char *file)
 
 	int dir_position[2] = { directory_index.block_number, directory_index.entry_index };
 
-	sfs_fclose(get_pid(dir_position));
+	sfs_fclose(get_pid(directory_index));
 	free_inode(dir_position);
 	clear_dir_pos(dir_position);
 	
