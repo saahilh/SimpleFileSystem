@@ -381,20 +381,15 @@ int
 next_block(INode *node, 
 					 int start_ptr)
 {
-	int ptr = start_ptr / BLOCK_SIZE;
+	int file_block_number = start_ptr / BLOCK_SIZE;
 
-	if (ptr!=0&&ptr%BLOCK_SIZE==0)
-	{
-		ptr--;
-	}
-
-	if (ptr>(BLOCK_SIZE/sizeof(int) + 13))
+	if (file_block_number>(BLOCK_SIZE/sizeof(int) + 13))
 	{
 		return -1;
 	}
-	else if (ptr >= 14 && ptr < 13 + (BLOCK_SIZE/sizeof(int)))
+	else if (file_block_number >= 14 && file_block_number < 13 + (BLOCK_SIZE/sizeof(int)))
 	{
-		ptr-=13;
+		file_block_number-=13;
 		Indirect more;
 		memset(&more, -1, sizeof(more));
 
@@ -409,31 +404,31 @@ next_block(INode *node,
 
 		read_blocks(node -> indirect, 1, &more);
 
-		if (more.block_ptrs[ptr]==-1)
+		if (more.block_ptrs[file_block_number]==-1)
 		{
-			if ((more.block_ptrs[ptr] = find_free_block())==-1)
+			if ((more.block_ptrs[file_block_number] = find_free_block())==-1)
 			{
 				return -1;
 			}
 
-			init_block(more.block_ptrs[ptr]);
+			init_block(more.block_ptrs[file_block_number]);
 			write_blocks(node -> indirect, 1, &more);
 		}
 
-		return more.block_ptrs[ptr];
+		return more.block_ptrs[file_block_number];
 	}
-	else if (ptr < 14 && ptr > -1)
+	else if (file_block_number < 14 && file_block_number > -1)
 	{
-		if (node -> direct[ptr]==-1)
+		if (node -> direct[file_block_number]==-1)
 		{
-			if ((node -> direct[ptr] = find_free_block())==-1)
+			if ((node -> direct[file_block_number] = find_free_block())==-1)
 			{
 				return -1;
 			}
 
-			init_block(node -> direct[ptr]);
+			init_block(node -> direct[file_block_number]);
 		}
-		return node -> direct[ptr];	
+		return node -> direct[file_block_number];	
 	}
 	else
 	{
