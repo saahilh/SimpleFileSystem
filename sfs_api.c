@@ -613,17 +613,15 @@ get_pid(DirectoryIndex directory_index)
 }
 
 void 
-clear_dir_pos(int dir_position[2])
+clear_dir_pos(DirectoryIndex directory_index)
 {
 	DirectoryBlock db;
-	read_blocks(dir_position[0], 1, &db);
+	read_blocks(directory_index.block_number, 1, &db);
 	
-	DirectoryEntry *current_entry = &db.directory_entries[dir_position[1]];
-	memset(current_entry -> name, -1, NAME_SIZE);
-	current_entry -> block_number = -1;
-	current_entry -> entry_number = -1;
+	DirectoryEntry *current_entry = &db.directory_entries[directory_index.entry_index];
+	memset(current_entry, -1, sizeof(DirectoryEntry));
 	
-	write_blocks(dir_position[0], 1, &db);
+	write_blocks(directory_index.block_number, 1, &db);
 }
 
 int 
@@ -640,7 +638,7 @@ sfs_remove(char *file)
 
 	sfs_fclose(get_pid(directory_index));
 	free_inode(dir_position);
-	clear_dir_pos(dir_position);
+	clear_dir_pos(directory_index);
 	
 	return 0;
 }
