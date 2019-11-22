@@ -40,8 +40,12 @@ int 	sfs_remove	(char *file);
 
 #define DIR_BLOCK_SIZE		BLOCK_SIZE/(NAME_SIZE+8)
 #define NUM_INODE_BLOCKS	14
-#define NUM_INODES_PER_INB	BLOCK_SIZE/(INODE_SIZE*sizeof(int))
+#define NUM_INODES_PER_INB	BLOCK_SIZE/ (INODE_SIZE * sizeof(int))
 #define NUM_INODES 			NUM_DIR_BLOCKS*DIR_BLOCK_SIZE
+
+#define NUMBER_OF_DIRECT_POINTERS_PER_INODE	INODE_SIZE - 2
+#define	NUMBER_OF_INDIRECT_POINTERS_IN_BLOCK	BLOCK_SIZE / sizeof(int)
+#define MAX_FILE_SIZE		(NUMBER_OF_DIRECT_POINTERS_PER_INODE + NUMBER_OF_INDIRECT_POINTERS_IN_BLOCK) * BLOCK_SIZE
 
 typedef struct super_block_t
 {
@@ -70,14 +74,14 @@ FileDescrTable;
 typedef struct inode_t
 {
 	int fsize;
-	int direct[INODE_SIZE - 2];
+	int direct[NUMBER_OF_DIRECT_POINTERS_PER_INODE];
 	int indirect;
 } 
 INode;
 
 typedef struct indirect
 {
-	int block_ptrs[BLOCK_SIZE/sizeof(int)];
+	int block_ptrs[NUMBER_OF_INDIRECT_POINTERS_IN_BLOCK];
 } 
 Indirect;
 

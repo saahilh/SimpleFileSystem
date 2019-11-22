@@ -381,13 +381,14 @@ int
 next_block(INode *node, 
 					 int start_ptr)
 {
-	int file_block_number = start_ptr / BLOCK_SIZE;
-
-	if (file_block_number>(BLOCK_SIZE/sizeof(int) + 13))
+	if(start_ptr > MAX_FILE_SIZE)
 	{
 		return -1;
 	}
-	else if (file_block_number >= 14 && file_block_number < 13 + (BLOCK_SIZE/sizeof(int)))
+
+	int file_block_number = start_ptr / BLOCK_SIZE;
+
+	if (file_block_number >= 14 && file_block_number < 13 + (BLOCK_SIZE/sizeof(int)))
 	{
 		file_block_number-=13;
 		Indirect more;
